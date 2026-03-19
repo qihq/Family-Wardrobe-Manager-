@@ -1,0 +1,6 @@
+{
+  "port": 3000,
+  "adminPassword": "admin123",
+  "sessionSecret": "wardrobe-secret-change-me",
+  "photoBaseDir": "./photos"
+}

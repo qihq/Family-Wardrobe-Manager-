@@ -1,0 +1,24 @@
+# 依赖包（容器内重新安装）
+node_modules/
+
+# 运行时数据（通过 volume 挂载持久化）
+photos/
+data/
+
+# 日志文件
+*.log
+wardrobe.pid
+
+# Docker 相关（不需要打进镜像）
+wardrobe.tar
+
+# 如需离线 AI，请注释下一行
+
+# 系统文件
+.DS_Store
+Thumbs.db
+.env
+
+# 开发文档（可选，注释掉则会打包进镜像）
+# DEPLOY.md
+# MANUAL.md

@@ -1,0 +1,47 @@
+services:
+  wardrobe:
+    # 基于本地 Dockerfile 构建镜像
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # 构建产出的镜像名称（也用于 docker save 导出）
+    image: wardrobe-manager:latest
+
+    # 容器名称
+    container_name: wardrobe
+
+    # 端口映射：宿主机 3000 → 容器 3000
+    ports:
+      - "3000:3000"
+
+    # 数据持久化挂载
+    # ── 重要 ──────────────────────────────────────────────────────
+    # 群晖 NAS 上请将下方路径改为绝对路径，例如：
+    #   /volume1/web/wardrobe/data:/app/data
+    #   /volume1/web/wardrobe/photos:/app/photos
+    #   /volume1/web/wardrobe/config.json:/app/config.json
+    # ─────────────────────────────────────────────────────────────
+    volumes:
+      # 衣物 JSON 数据（wardrobe.json / members.json）
+      - ./data:/app/data
+      # 图片文件（按 人员/类型/文件名 自动分类存储）
+      - ./photos:/app/photos
+      # 配置文件（单文件挂载，修改后重启容器生效）
+      - ./config.json:/app/config.json
+
+    # 环境变量
+    environment:
+      - TZ=Asia/Shanghai
+      - NODE_ENV=production
+
+    # 异常退出时自动重启（手动 docker stop 不会触发重启）
+    restart: unless-stopped
+
+    # 健康检查：每30秒检查一次服务是否正常响应
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/members"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
