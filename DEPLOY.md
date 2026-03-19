@@ -1,4 +1,11 @@
-# 部署指南
+# 部署指南 · Deployment Guide
+
+[中文](#中文) | [English](#english)
+
+---
+
+<a name="中文"></a>
+# 中文
 
 两种部署方式，**推荐 Docker 方式**：
 
@@ -57,8 +64,6 @@
 
 下载地址：https://www.docker.com/products/docker-desktop/
 
-安装后启动，确认任务栏出现 🐳 图标。
-
 ### A-2：构建并导出镜像
 
 打开 PowerShell（Windows）或终端（Mac），进入项目文件夹执行：
@@ -82,7 +87,7 @@ docker save -o wardrobe.tar wardrobe-manager:latest
 
 ### A-5：创建容器
 
-在映像列表找到 `wardrobe-manager:latest`，点「**执行**」，按以下配置填写：
+在映像列表找到 `wardrobe-manager:latest`，点「**执行**」：
 
 **常规：**
 - 容器名称：`wardrobe`
@@ -103,7 +108,7 @@ docker save -o wardrobe.tar wardrobe-manager:latest
 | `/volume1/web/wardrobe/config.json` | `/app/config.json` | 只读 |
 | `/volume1/web/wardrobe/public` | `/app/public` | 读写 |
 
-> 💡 挂载 `public/` 目录后，以后更新前端文件（HTML/CSS/JS）只需替换 NAS 上的文件，刷新浏览器即生效，无需重建镜像。
+> 💡 挂载 `public/` 后，更新前端文件只需替换 NAS 上的文件，刷新浏览器即生效，无需重建镜像。
 
 **环境变量：**
 
@@ -138,7 +143,7 @@ docker compose up -d
 
 ### 只更新前端文件（无需重建镜像）
 
-直接用 File Station 替换 NAS 上对应文件，刷新浏览器即生效：
+用 File Station 替换以下文件，刷新浏览器即生效：
 
 ```
 /volume1/web/wardrobe/public/shared/style.css
@@ -152,11 +157,11 @@ docker compose up -d
 ### 更新后端 server.js（需重建镜像）
 
 1. 本地修改 `server.js` 后重新执行 A-2～A-5
-2. 停止并删除旧容器，用新镜像重新创建（volume 配置不变，数据不丢失）
+2. 停止并删除旧容器，用新镜像重新创建（volume 配置不变）
 
 ### 数据安全说明
 
-重建镜像、删除容器**不会影响任何数据**，数据全部存在 volume 挂载目录中：
+重建镜像、删除容器**不会影响任何数据**，数据全部在 volume 挂载目录中：
 
 ```
 /volume1/web/wardrobe/data/      ← 衣物和人员数据
@@ -168,18 +173,11 @@ docker compose up -d
 ## Docker 常用命令
 
 ```bash
-# 查看容器状态
-docker ps | grep wardrobe
-
-# 查看日志
-docker logs -f wardrobe
-
-# 重启容器（修改 config.json 后需重启）
-docker restart wardrobe
-
-# 停止 / 启动
-docker stop wardrobe
-docker start wardrobe
+docker ps | grep wardrobe       # 查看容器状态
+docker logs -f wardrobe         # 查看日志
+docker restart wardrobe         # 重启容器
+docker stop wardrobe            # 停止
+docker start wardrobe           # 启动
 ```
 
 ---
@@ -210,8 +208,6 @@ docker start wardrobe
 }
 ```
 
-> 手动部署时 `photoBaseDir` 填 NAS 实际路径。
-
 ### 3. 安装依赖
 
 ```bash
@@ -225,11 +221,9 @@ npm install
 node server.js
 ```
 
-看到 `✅ 衣橱管理系统已启动` 即正常，浏览器验证后 Ctrl+C 停止。
-
 ### 5. 配置开机自启
 
-创建启动脚本 `/volume1/web/wardrobe/start.sh`：
+创建 `/volume1/web/wardrobe/start.sh`：
 
 ```bash
 #!/bin/bash
@@ -242,10 +236,10 @@ echo $! > /volume1/web/wardrobe/wardrobe.pid
 chmod +x /volume1/web/wardrobe/start.sh
 ```
 
-DSM → 控制面板 → 任务计划 → 新增触发任务：
-- 事件：开机
-- 用户：root
-- 命令：`bash /volume1/web/wardrobe/start.sh`
+DSM → 控制面板 → 任务计划 → 新增触发任务（开机）→ 运行命令：
+```
+bash /volume1/web/wardrobe/start.sh
+```
 
 ---
 
@@ -253,7 +247,262 @@ DSM → 控制面板 → 任务计划 → 新增触发任务：
 
 | 用途 | 地址 |
 |---|---|
-| 只读端（阿姨用）| `http://NAS的IP:3000/view` |
+| 只读端 | `http://NAS的IP:3000/view` |
 | 管理端 | `http://NAS的IP:3000/admin` |
 
-> 建议将只读端地址制成二维码贴在衣橱旁，方便扫码查看。
+---
+
+<a name="english"></a>
+# English
+
+Two deployment options. **Docker is recommended.**
+
+| Method | Difficulty | Best for |
+|---|---|---|
+| **Docker (Recommended)** | ⭐ Easy | Synology NAS with Container Manager, or any machine with Docker |
+| Manual | ⭐⭐⭐ Advanced | Environments where Docker is not available |
+
+---
+
+# 🐳 Docker Deployment
+
+## Prerequisites
+
+Create the following directory structure on your NAS using File Station:
+
+```
+/volume1/web/wardrobe/
+├── config.json          ← copy from project and edit
+├── data/
+│   ├── wardrobe.json    ← content: []
+│   └── members.json     ← see below
+├── photos/              ← empty folder
+└── public/              ← copy the entire public/ folder from project
+```
+
+**Initial `data/members.json` (edit to match your family):**
+
+```json
+[
+  { "id": "member_1", "name": "Child 1" },
+  { "id": "member_2", "name": "Child 2" }
+]
+```
+
+**`config.json` — required fields:**
+
+```json
+{
+  "port": 3000,
+  "adminPassword": "your-password",
+  "sessionSecret": "replace-with-a-random-string-like-xK9mP2qR8nW3jA7c",
+  "photoBaseDir": "/app/photos"
+}
+```
+
+> ⚠️ When using Docker, `photoBaseDir` **must be `/app/photos`** (the container's internal path).
+
+---
+
+## Option A: Build on Your Computer (Recommended)
+
+Best for home NAS setups — the NAS does not need internet access.
+
+### A-1: Install Docker Desktop
+
+Download: https://www.docker.com/products/docker-desktop/
+
+### A-2: Build and Export the Image
+
+Open PowerShell (Windows) or Terminal (Mac), navigate to the project folder and run:
+
+```
+docker build --platform linux/amd64 -t wardrobe-manager:latest .
+docker save -o wardrobe.tar wardrobe-manager:latest
+```
+
+Takes about 3–5 minutes. A `wardrobe.tar` file (~60–80MB) will be created.
+
+### A-3: Upload tar to NAS
+
+Use File Station to upload `wardrobe.tar` to `/volume1/web/wardrobe/`.
+
+### A-4: Import Image in Container Manager
+
+1. Open **Container Manager** → **Image** (left sidebar)
+2. Click **Add** → **Add from File** → select `wardrobe.tar`
+3. Wait for import to finish — `wardrobe-manager:latest` will appear in the list
+
+### A-5: Create Container
+
+Find `wardrobe-manager:latest` and click **Run**:
+
+**General:**
+- Container name: `wardrobe`
+- Enable auto-restart ✅
+
+**Port:**
+
+| Local Port | Container Port |
+|---|---|
+| `3000` | `3000` |
+
+**Volume Mounts (4 entries):**
+
+| Local Path | Container Path | Mode |
+|---|---|---|
+| `/volume1/web/wardrobe/data` | `/app/data` | Read/Write |
+| `/volume1/web/wardrobe/photos` | `/app/photos` | Read/Write |
+| `/volume1/web/wardrobe/config.json` | `/app/config.json` | Read-only |
+| `/volume1/web/wardrobe/public` | `/app/public` | Read/Write |
+
+> 💡 Mounting `public/` means you can update frontend files (HTML/CSS/JS) by replacing files on the NAS — no image rebuild needed, just refresh the browser.
+
+**Environment Variables:**
+
+| Name | Value |
+|---|---|
+| `TZ` | `Asia/Shanghai` |
+
+Click **Done** — the container starts automatically.
+
+### A-6: Verify
+
+Open in browser:
+- Read-only view: `http://YOUR-NAS-IP:3000/view`
+- Admin panel: `http://YOUR-NAS-IP:3000/admin`
+
+---
+
+## Option B: Build Directly on NAS (requires internet access)
+
+SSH into NAS and run:
+
+```bash
+cd /volume1/web/wardrobe
+docker compose up -d
+```
+
+First build takes about 5–10 minutes.
+
+---
+
+## Updating
+
+### Frontend files only (no image rebuild needed)
+
+Replace files via File Station, then refresh the browser:
+
+```
+/volume1/web/wardrobe/public/shared/style.css
+/volume1/web/wardrobe/public/shared/utils.js
+/volume1/web/wardrobe/public/admin/index.html
+/volume1/web/wardrobe/public/admin/admin.js
+/volume1/web/wardrobe/public/view/index.html
+/volume1/web/wardrobe/public/view/view.js
+```
+
+### Backend server.js (image rebuild required)
+
+1. Update `server.js` locally, then repeat A-2 through A-5
+2. Stop and delete the old container, recreate with the new image (keep same volume config)
+
+### Data Safety
+
+Rebuilding the image or deleting the container **will not affect your data**. All data lives in the volume-mounted directories:
+
+```
+/volume1/web/wardrobe/data/      ← clothing and member records
+/volume1/web/wardrobe/photos/    ← photo files
+```
+
+---
+
+## Useful Docker Commands
+
+```bash
+docker ps | grep wardrobe       # check container status
+docker logs -f wardrobe         # view logs
+docker restart wardrobe         # restart container
+docker stop wardrobe            # stop
+docker start wardrobe           # start
+```
+
+---
+
+# 📋 Manual Deployment (without Docker)
+
+## Requirements
+
+| Software | Version | Install via |
+|---|---|---|
+| Node.js | 18.x or higher | Package Center → SynoCommunity |
+| Web Station | 3.x | Package Center |
+
+## Steps
+
+### 1. Upload project files
+
+Upload the project folder to `/volume1/web/wardrobe/`
+
+### 2. Edit config.json
+
+```json
+{
+  "port": 3000,
+  "adminPassword": "your-password",
+  "sessionSecret": "random-long-string",
+  "photoBaseDir": "/volume1/web/wardrobe/photos"
+}
+```
+
+> For manual deployment, `photoBaseDir` should be the actual NAS path.
+
+### 3. Install dependencies
+
+```bash
+cd /volume1/web/wardrobe
+npm install
+```
+
+### 4. Test run
+
+```bash
+node server.js
+```
+
+You should see:
+```
+✅ Server started
+   Read-only: http://localhost:3000/view
+   Admin: http://localhost:3000/admin
+```
+
+### 5. Auto-start on boot
+
+Create `/volume1/web/wardrobe/start.sh`:
+
+```bash
+#!/bin/bash
+cd /volume1/web/wardrobe
+/usr/local/bin/node server.js >> /volume1/web/wardrobe/wardrobe.log 2>&1 &
+echo $! > /volume1/web/wardrobe/wardrobe.pid
+```
+
+```bash
+chmod +x /volume1/web/wardrobe/start.sh
+```
+
+In DSM: Control Panel → Task Scheduler → Create Triggered Task (Boot-up) → run command:
+```
+bash /volume1/web/wardrobe/start.sh
+```
+
+---
+
+## Access URLs
+
+| Purpose | URL |
+|---|---|
+| Read-only view | `http://YOUR-NAS-IP:3000/view` |
+| Admin panel | `http://YOUR-NAS-IP:3000/admin` |
