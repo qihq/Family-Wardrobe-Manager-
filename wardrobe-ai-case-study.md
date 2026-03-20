@@ -1564,4 +1564,162 @@ requirements decisions and product experience.
 
 > 项目源码 / Project source: GitHub（见 README.md）
 > 作者 / Author: 基于真实家庭需求开发 / Built for real family use
+>
+> 
+# 第四部分：持续迭代——今日更新
+
+# Part 4: Continued Iteration — Today's Updates
+
+> 项目上线后继续迭代，这一阶段完成了多选筛选升级和筛选胶囊图标两项更新。
+> Post-launch iteration: multi-select filtering upgrade and filter pill icons.
+
+---
+
+## 💬 用户：多维度多选筛选需求 / User: Multi-Select Filter Requirements
+
+对现有筛选功能进行升级，将所有筛选维度从单选改为多选：
+
+**多选逻辑：** 同维度 OR，跨维度 AND
+- 示例：选「大儿子 + 小儿子」+「裤子 + 外套」
+- → （大儿子 OR 小儿子）AND（裤子 OR 外套）
+
+**Admin 桌面端：** 将 `<select>` 下拉单选全部替换为胶囊多选组，新增重置按钮（有激活时显示红点）
+
+**Admin 手机 Sheet：** 胶囊从单选改为多选，保留「应用」按钮
+
+**View 端：** 人员/类型/季节/状态/收藏全部多选，底部人员 Tab 可多选
+
+**后端：** `/api/clothes` 支持逗号分隔多值参数 `?member=大儿子,小儿子`
+
+Upgrade all filter dimensions from single-select to multi-select.
+
+**Logic:** Same dimension = OR, cross dimension = AND
+
+**Backend:** `/api/clothes` supports comma-separated multi-value params
+
+---
+
+## 🤖 Claude：多选筛选完整实现 / Claude: Multi-Select Implementation
+
+**改动文件：** `server.js`、`admin/index.html`、`admin.js`、`view/index.html`、`view.js`
+
+**后端核心：新增 `parseMultiParam()` 工具函数**
+
+```javascript
+function parseMultiParam(query, key) {
+  const raw = query[key];
+  if (!raw) return [];
+  const arr = Array.isArray(raw) ? raw : [raw];
+  return arr.flatMap(v => v.split(',')).map(v => v.trim()).filter(Boolean);
+}
+
+// 多值 OR 过滤，空数组 = 不过滤该维度
+const members = parseMultiParam(req.query, 'member');
+if (members.length) list = list.filter(c => members.includes(c.member));
+```
+
+**前端核心：多选状态数组 + toggle 函数**
+
+```javascript
+let filterMembers  = [];
+let filterTypes    = [];
+let filterSeasons  = [];
+let filterStatuses = [];
+
+function toggleFilter(arr, value) {
+  const idx = arr.indexOf(value);
+  if (idx === -1) arr.push(value);
+  else arr.splice(idx, 1);
+}
+
+// 构建请求参数（逗号分隔）
+function buildFilterParams() {
+  const params = new URLSearchParams();
+  if (filterMembers.length)  params.set('member', filterMembers.join(','));
+  if (filterTypes.length)    params.set('type',   filterTypes.join(','));
+  // ...
+}
+```
+
+**手机 Sheet 用临时数组：** 打开 Sheet 时拷贝全局状态，点「应用」才写回，点「重置」只清临时数组，不影响当前筛选结果。
+
+**Modified files:** `server.js`, `admin/index.html`, `admin.js`, `view/index.html`, `view.js`
+
+---
+
+## 💬 用户：筛选胶囊添加图标 / User: Add Icons to Filter Pills
+
+所有筛选维度的胶囊加图标前缀：
+- 季节：🌸春 ☀️夏 🍂秋 ❄️冬 🌈四季
+- 状态：✅在用 📦闲置 🗑️已淘汰
+- 人员：👦 前缀
+- 类型已有图标不变，收藏已有 ⭐ 不变
+
+Add icon prefixes to all filter pills.
+
+---
+
+## 🤖 Claude：确认图标已实现 + 内衣图标澄清 / Claude: Icons Confirmed + Underwear Icon Clarification
+
+检查本地文件后发现图标在上一版本中已完整实现，直接输出最新文件即可。
+
+同时用户提出更新一要把内衣图标改为 🩲，Claude 确认当前已经是正确的：
+- 内衣：🩱（保持不变）
+- 内裤：🩲（保持不变）
+
+两者不同，无需修改 `utils.js`。
+
+After checking local files, all icons were already implemented in the previous version.
+
+Also clarified underwear icons — 内衣 🩱 and 内裤 🩲 are already correct and distinct, no change needed to `utils.js`.
+
+**已实现的图标常量：**
+```javascript
+const SEASON_ICONS = { '春':'🌸', '夏':'☀️', '秋':'🍂', '冬':'❄️', '四季':'🌈' };
+const STATUS_ICONS = { '在用':'✅', '闲置':'📦', '已淘汰':'🗑️' };
+// 人员：'👦 ' + m.name
+```
+
+---
+
+## 💬 用户：确认效果 + 推送 GitHub / User: Confirm and Push to GitHub
+
+UI 更新没问题，询问 server.js 改动内容，然后打包推送 GitHub。
+
+Confirmed UI looks good, asked about server.js changes, then packaged for GitHub push.
+
+---
+
+## 🤖 Claude：server.js 影响说明 + commit 信息 / Claude: server.js Impact + Commit Message
+
+**不更新 server.js 的影响：**
+前端发送 `?member=大儿子,小儿子` 时，旧 server.js 会把整个字符串当一个值匹配，找不到对应人员，返回空列表。单选时完全正常，多选多个时才出现问题。
+
+**Commit message:**
+```
+feat: 多维度多选筛选 + 筛选胶囊图标
+
+- 筛选逻辑升级为多选：人员、类型、季节、状态支持同时选中多个
+- 同维度 OR，跨维度 AND，未选维度不过滤
+- server.js 支持逗号分隔多值参数解析
+- Admin 桌面端：下拉框改为分组胶囊多选，重置按钮含红点提示
+- Admin 手机 Sheet：多选逻辑，保留「应用」按钮
+- View 端：人员/类型/季节/状态/收藏全部支持多选，底部人员 Tab 可多选
+- 筛选胶囊统一加图标前缀：季节 🌸☀️🍂❄️🌈，状态 ✅📦🗑️，人员 👦
+```
+
+---
+
+## 今日更新总结 / Today's Update Summary
+
+| 维度 / Dimension | 改动 / Change |
+|---|---|
+| 筛选逻辑 / Filter logic | 单选 → 多选，OR + AND 组合 |
+| 后端参数 / Backend params | 单值 → 逗号分隔多值 |
+| 前端状态 / Frontend state | 单变量 → 数组 + toggle |
+| 视觉增强 / Visual | 所有胶囊加图标前缀 |
+| 调试发现 / Debug finding | NAS 上 public/ 未挂载 volume 时文件替换不生效 |
+
+---
+
 
