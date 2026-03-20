@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>家庭衣橱</title>
+  <link rel="stylesheet" href="/public/shared/style.css">
+  <style>
+    .view-page { min-height: 100vh; }
+
+    /* 筛选区 */
+    .view-filter-bar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      position: sticky;
+      top: var(--navbar-h);
+      z-index: 90;
+    }
+    .view-filter-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 10px 0;
+      align-items: center;
+    }
+    .view-filter-row::-webkit-scrollbar { display: none; }
+
+    /* 重置胶囊 */
+    .filter-pill-reset {
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-hint);
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: all var(--transition);
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .filter-pill-reset:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-light); }
+    .filter-pill-reset.has-active { border-color: var(--danger); color: var(--danger); background: var(--danger-light); }
+    .filter-pill-reset-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); display: none; }
+    .filter-pill-reset.has-active .filter-pill-reset-dot { display: inline-block; }
+
+    /* 分隔线 */
+    .filter-divider {
+      width: 1px; height: 20px; background: var(--border); flex-shrink: 0; margin: 0 4px;
+    }
+
+    /* 结果区 */
+    .view-results-section { padding: 16px 20px 32px; max-width: 1200px; margin: 0 auto; }
+    .result-count { font-size: 0.82rem; color: var(--text-hint); margin-bottom: 12px; padding: 0 2px; }
+
+    /* 详情弹窗手机 bottom sheet */
+    @media (max-width: 767px) {
+      .view-filter-bar { padding: 0 12px; }
+      .view-results-section { padding: 10px 12px 140px; }
+      #detail-modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+      #detail-modal-overlay .modal {
+        border-radius: 20px 20px 0 0 !important;
+        max-width: 100% !important;
+        max-height: 88vh;
+        transform: translateY(100%) !important;
+      }
+      #detail-modal-overlay.open .modal { transform: translateY(0) !important; }
+    }
+  </style>
+</head>
+<body class="view-page">
+
+  <!-- 顶部导航 -->
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="navbar-brand">👕 家庭衣橱</div>
+      <!-- 桌面/平板：人员多选 Tab 在导航栏内 -->
+      <div id="member-tabs-top"
+        style="display:flex;gap:6px;flex:1;justify-content:center;
+               overflow-x:auto;scrollbar-width:none;padding:0 12px">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <a href="/admin" class="btn btn-ghost btn-sm" style="font-size:0.82rem">管理入口 →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 筛选条（桌面/平板）：类型 | 季节 | 状态 | ⭐收藏 | 重置 -->
+  <div class="view-filter-bar">
+
+    <!-- 第一行：类型 + 季节 -->
+    <div class="view-filter-row" id="type-filter-row">
+      <!-- 重置按钮（最左）-->
+      <button class="filter-pill-reset" id="view-reset-btn-top">
+        <span class="filter-pill-reset-dot"></span>重置
+      </button>
+      <div class="filter-divider"></div>
+      <!-- 类型胶囊（JS 渲染）-->
+    </div>
+
+    <!-- 第二行：季节 + 状态 + 收藏 -->
+    <div class="view-filter-row" id="season-status-row" style="padding-top:0;padding-bottom:10px">
+      <!-- 季节胶囊（JS 渲染）-->
+      <div class="filter-divider" id="season-status-divider"></div>
+      <!-- 状态胶囊（JS 渲染）-->
+      <div class="filter-divider" id="fav-divider"></div>
+      <!-- 收藏胶囊 -->
+      <button class="filter-pill" id="fav-pill-desktop" data-fav="false">⭐ 收藏</button>
+    </div>
+
+  </div>
+
+  <!-- 手机端筛选按钮行 -->
+  <div style="padding:10px 12px 0;display:none" id="mobile-filter-bar" class="filter-btn-mobile">
+    <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px">
+      <button class="btn btn-ghost btn-sm" id="open-filter-sheet-btn" style="flex-shrink:0">🔍 筛选</button>
+      <button class="filter-pill-reset" id="view-reset-btn-mobile" style="flex-shrink:0">
+        <span class="filter-pill-reset-dot"></span>重置
+      </button>
+      <div id="active-filter-tags" style="display:flex;gap:6px;align-items:center;flex-shrink:0"></div>
+    </div>
+  </div>
+
+  <!-- 内容区 -->
+  <div class="view-results-section" id="results-section">
+    <div class="result-count" id="result-count"></div>
+    <div id="clothes-grid-wrap">
+      <div class="loading-overlay"><div class="spinner"></div>加载中…</div>
+    </div>
+  </div>
+
+  <!-- 手机底部人员多选 Tab -->
+  <div class="view-bottom-nav">
+    <div class="view-bottom-nav-inner" id="member-tab-bar"></div>
+  </div>
+
+  <!-- 详情弹窗 -->
+  <div class="modal-overlay" id="detail-modal-overlay">
+    <div class="modal" id="detail-modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <span id="detail-modal-title">衣物详情</span>
+        <button class="btn-icon" id="detail-modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-photo-wrap" id="detail-photo-wrap"></div>
+        <div id="detail-fields-wrap"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="detail-close-btn" style="min-width:100px">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 手机筛选 Bottom Sheet（多选版） -->
+  <div class="bottom-sheet-overlay" id="filter-sheet-overlay"></div>
+  <div class="bottom-sheet" id="filter-sheet">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-header">
+      <span>筛选</span>
+      <button class="btn-icon" id="close-filter-sheet-btn">✕</button>
+    </div>
+    <div class="bottom-sheet-body">
+      <!-- 人员 -->
+      <div class="filter-sheet-row">
+        <div class="filter-sheet-label">适用人员</div>
+        <div class="filter-sheet-pills" id="sheet-member-pills"></div>
+      </div>
+      <!-- 类型 -->
+      <div class="filter-sheet-row">
+        <div class="filter-sheet-label">衣物类型</div>
+        <div class="filter-sheet-pills" id="sheet-type-pills"></div>
+      </div>
+      <!-- 季节 -->
+      <div class="filter-sheet-row">
+        <div class="filter-sheet-label">适穿季节</div>
+        <div class="filter-sheet-pills" id="sheet-season-pills"></div>
+      </div>
+      <!-- 状态 -->
+      <div class="filter-sheet-row">
+        <div class="filter-sheet-label">状态</div>
+        <div class="filter-sheet-pills" id="sheet-status-pills"></div>
+      </div>
+      <!-- 收藏 -->
+      <div class="filter-sheet-row">
+        <div class="filter-sheet-label">收藏</div>
+        <div class="filter-sheet-pills">
+          <button class="filter-sheet-pill" id="sheet-fav-pill">⭐ 只看收藏</button>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-sheet-footer">
+      <button class="btn btn-ghost" id="filter-sheet-reset-btn">重置筛选</button>
+      <button class="btn btn-primary" id="filter-sheet-apply-btn">查看结果</button>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="/public/shared/utils.js"></script>
+  <script src="/public/view/view.js"></script>
+</body>
+</html>

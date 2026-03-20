@@ -8,7 +8,7 @@ const fs      = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 // ─── 读取配置 ─────────────────────────────────────────────────────
-const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+const config        = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
 const PORT          = config.port         || 3000;
 const ADMIN_PWD     = config.adminPassword;
 const SESSION_SEC   = config.sessionSecret;
@@ -38,35 +38,45 @@ function writeJSON(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
 }
 
-// ─── 季节匹配（四季 = 全季）──────────────────────────────────────
-function matchSeason(itemSeasons, querySeason) {
-  if (!querySeason) return true;
-  if (!itemSeasons || itemSeasons.length === 0) return false;
-  if (itemSeasons.includes('四季')) return true;
-  return itemSeasons.includes(querySeason);
+// ─── 多值参数解析工具 ─────────────────────────────────────────────
+// 支持逗号分隔：?member=大儿子,小儿子 → ['大儿子', '小儿子']
+// 支持重复键：?member=大儿子&member=小儿子 → ['大儿子', '小儿子']
+// 空字符串过滤，返回空数组表示"不过滤此维度"
+function parseMultiParam(query, key) {
+  const raw = query[key];
+  if (!raw) return [];
+  const arr = Array.isArray(raw) ? raw : [raw];
+  return arr
+    .flatMap(v => v.split(','))
+    .map(v => v.trim())
+    .filter(Boolean);
 }
 
-// ─── Multer：同时处理 photo（展示图）和 thumb（缩略图）──────────
+// ─── 季节匹配（四季 = 全季）──────────────────────────────────────
+// seasons: 衣物的季节数组；querySeasons: 筛选选中的季节数组
+function matchSeasons(itemSeasons, querySeasons) {
+  if (!querySeasons || querySeasons.length === 0) return true;
+  if (!itemSeasons  || itemSeasons.length  === 0) return false;
+  if (itemSeasons.includes('四季')) return true;       // 四季衣物全命中
+  return querySeasons.some(s => itemSeasons.includes(s)); // OR 匹配
+}
+
+// ─── Multer：photo + thumb 双字段 ────────────────────────────────
 const storage = multer.diskStorage({
   destination(req, file, cb) {
     const member = sanitizePath(req.body.member || '未分类');
     const type   = sanitizePath(req.body.clothingType || '其他');
     let dir = path.join(PHOTO_BASE, member, type);
-    // 缩略图放 thumbs 子目录
-    if (file.fieldname === 'thumb') {
-      dir = path.join(dir, 'thumbs');
-    }
+    if (file.fieldname === 'thumb') dir = path.join(dir, 'thumbs');
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
   filename(req, file, cb) {
     const ext = path.extname(file.originalname) || '.jpg';
-    // photo 和 thumb 使用同一个基础文件名，方便对应
     if (!req._fileBasename) req._fileBasename = `${Date.now()}_${uuidv4().slice(0, 8)}`;
     cb(null, req._fileBasename + ext);
   }
 });
-
 const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 },
@@ -75,8 +85,6 @@ const upload = multer({
     else cb(new Error('只允许上传图片文件'));
   }
 });
-
-// 同时接收 photo 和 thumb 两个字段
 const uploadFields = upload.fields([
   { name: 'photo', maxCount: 1 },
   { name: 'thumb', maxCount: 1 }
@@ -85,28 +93,21 @@ const uploadFields = upload.fields([
 function sanitizePath(str) {
   return String(str).replace(/[\/\\:*?"<>|]/g, '_').slice(0, 50);
 }
-
-// ─── 从 req.files 中提取路径 ──────────────────────────────────────
 function extractPaths(req) {
   const files = req.files || {};
-  let photoPath = null;
-  let thumbPath = null;
-
-  if (files.photo && files.photo[0]) {
-    const rel = path.relative(PHOTO_BASE, files.photo[0].path).replace(/\\/g, '/');
-    photoPath = `/photos/${rel}`;
+  let photoPath = null, thumbPath = null;
+  if (files.photo?.[0]) {
+    photoPath = '/photos/' + path.relative(PHOTO_BASE, files.photo[0].path).replace(/\\/g, '/');
   }
-  if (files.thumb && files.thumb[0]) {
-    const rel = path.relative(PHOTO_BASE, files.thumb[0].path).replace(/\\/g, '/');
-    thumbPath = `/photos/${rel}`;
+  if (files.thumb?.[0]) {
+    thumbPath = '/photos/' + path.relative(PHOTO_BASE, files.thumb[0].path).replace(/\\/g, '/');
   }
   return { photoPath, thumbPath };
 }
-
 function deleteFile(filePath) {
   if (!filePath) return;
   const abs = path.join(PHOTO_BASE, filePath.replace(/^\/photos\//, ''));
-  if (fs.existsSync(abs)) try { fs.unlinkSync(abs); } catch (e) {}
+  if (fs.existsSync(abs)) try { fs.unlinkSync(abs); } catch {}
 }
 
 // ─── Express ──────────────────────────────────────────────────────
@@ -134,19 +135,11 @@ app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public/
 // ─── Auth ─────────────────────────────────────────────────────────
 app.post('/api/login', (req, res) => {
   const { password } = req.body;
-  if (password === ADMIN_PWD) {
-    req.session.isAdmin = true;
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ success: false, message: '密码错误' });
-  }
+  if (password === ADMIN_PWD) { req.session.isAdmin = true; res.json({ success: true }); }
+  else res.status(401).json({ success: false, message: '密码错误' });
 });
-app.post('/api/logout', (req, res) => {
-  req.session.destroy(() => res.json({ success: true }));
-});
-app.get('/api/auth/check', (req, res) => {
-  res.json({ isAdmin: !!req.session.isAdmin });
-});
+app.post('/api/logout', (req, res) => req.session.destroy(() => res.json({ success: true })));
+app.get('/api/auth/check', (req, res) => res.json({ isAdmin: !!req.session.isAdmin }));
 
 function requireAdmin(req, res, next) {
   if (req.session.isAdmin) return next();
@@ -158,7 +151,7 @@ app.get('/api/members', (req, res) => res.json(readJSON(MEMBERS_FILE)));
 
 app.post('/api/members', requireAdmin, (req, res) => {
   const { name } = req.body;
-  if (!name || !name.trim()) return res.status(400).json({ message: '人员姓名不能为空' });
+  if (!name?.trim()) return res.status(400).json({ message: '人员姓名不能为空' });
   const members = readJSON(MEMBERS_FILE);
   if (members.find(m => m.name === name.trim()))
     return res.status(400).json({ message: '该人员已存在' });
@@ -170,7 +163,7 @@ app.post('/api/members', requireAdmin, (req, res) => {
 
 app.put('/api/members/:id', requireAdmin, (req, res) => {
   const { name } = req.body;
-  if (!name || !name.trim()) return res.status(400).json({ message: '姓名不能为空' });
+  if (!name?.trim()) return res.status(400).json({ message: '姓名不能为空' });
   const members = readJSON(MEMBERS_FILE);
   const idx = members.findIndex(m => m.id === req.params.id);
   if (idx === -1) return res.status(404).json({ message: '人员不存在' });
@@ -180,11 +173,9 @@ app.put('/api/members/:id', requireAdmin, (req, res) => {
   writeJSON(MEMBERS_FILE, members);
   if (oldName !== newName) {
     const wardrobe = readJSON(WARDROBE_FILE);
-    let updated = false;
-    wardrobe.forEach(item => {
-      if (item.member === oldName) { item.member = newName; updated = true; }
-    });
-    if (updated) writeJSON(WARDROBE_FILE, wardrobe);
+    let changed = false;
+    wardrobe.forEach(item => { if (item.member === oldName) { item.member = newName; changed = true; } });
+    if (changed) writeJSON(WARDROBE_FILE, wardrobe);
   }
   res.json(members[idx]);
 });
@@ -193,34 +184,49 @@ app.delete('/api/members/:id', requireAdmin, (req, res) => {
   let members = readJSON(MEMBERS_FILE);
   const exists = members.find(m => m.id === req.params.id);
   if (!exists) return res.status(404).json({ message: '人员不存在' });
-  const wardrobe = readJSON(WARDROBE_FILE);
-  if (wardrobe.some(c => c.member === exists.name))
+  if (readJSON(WARDROBE_FILE).some(c => c.member === exists.name))
     return res.status(400).json({ message: '该人员名下还有衣物，请先转移或删除后再操作' });
-  members = members.filter(m => m.id !== req.params.id);
-  writeJSON(MEMBERS_FILE, members);
+  writeJSON(MEMBERS_FILE, members.filter(m => m.id !== req.params.id));
   res.json({ success: true });
 });
 
 // ─── 衣物 API ─────────────────────────────────────────────────────
+
+// GET /api/clothes
+// 多值参数支持逗号分隔或重复键，同维度 OR，跨维度 AND
 app.get('/api/clothes', (req, res) => {
   let list = readJSON(WARDROBE_FILE);
-  const { member, type, status, season, favorite, q } = req.query;
-  if (member)   list = list.filter(c => c.member === member);
-  if (type)     list = list.filter(c => c.clothingType === type);
-  if (status)   list = list.filter(c => c.status === status);
-  if (season)   list = list.filter(c => matchSeason(c.seasons, season));
+
+  const members  = parseMultiParam(req.query, 'member');
+  const types    = parseMultiParam(req.query, 'type');
+  const seasons  = parseMultiParam(req.query, 'season');
+  const statuses = parseMultiParam(req.query, 'status');
+  const { favorite, q } = req.query;
+
+  // 同维度 OR 过滤
+  if (members.length)  list = list.filter(c => members.includes(c.member));
+  if (types.length)    list = list.filter(c => types.includes(c.clothingType));
+  if (statuses.length) list = list.filter(c => statuses.includes(c.status));
+
+  // 季节：四季衣物全命中，否则 OR 匹配
+  if (seasons.length)  list = list.filter(c => matchSeasons(c.seasons, seasons));
+
+  // 收藏（单值）
   if (favorite === 'true') list = list.filter(c => c.favorite === true);
+
+  // 文本搜索
   if (q) list = list.filter(c =>
     (c.name  && c.name.includes(q))  ||
     (c.brand && c.brand.includes(q)) ||
     (c.color && c.color.includes(q)) ||
     (c.notes && c.notes.includes(q))
   );
+
   list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   res.json(list);
 });
 
-// POST /api/clothes — 接收 photo + thumb 双字段
+// POST /api/clothes
 app.post('/api/clothes', requireAdmin, uploadFields, (req, res) => {
   try {
     const { name, clothingType, member, size, color, brand, notes, status, seasons, favorite } = req.body;
@@ -228,7 +234,6 @@ app.post('/api/clothes', requireAdmin, uploadFields, (req, res) => {
       return res.status(400).json({ message: '衣物类型和适用人员为必填项' });
 
     const { photoPath, thumbPath } = extractPaths(req);
-
     let seasonsArr = [];
     if (seasons) {
       try { seasonsArr = JSON.parse(seasons); }
@@ -236,29 +241,19 @@ app.post('/api/clothes', requireAdmin, uploadFields, (req, res) => {
     }
 
     const item = {
-      id:           uuidv4(),
-      name:         (name  || '').trim(),
-      clothingType,
-      member,
-      size:         (size  || '').trim(),
-      color:        (color || '').trim(),
-      brand:        (brand || '').trim(),
-      notes:        (notes || '').trim(),
-      status:       status || '在用',
-      seasons:      seasonsArr,
-      favorite:     favorite === 'true' || favorite === true,
-      photoPath,
-      thumbPath,    // 新增，旧数据无此字段时 fallback photoPath
-      createdAt:    new Date().toISOString(),
-      updatedAt:    new Date().toISOString()
+      id: uuidv4(), name: (name || '').trim(), clothingType, member,
+      size: (size || '').trim(), color: (color || '').trim(),
+      brand: (brand || '').trim(), notes: (notes || '').trim(),
+      status: status || '在用', seasons: seasonsArr,
+      favorite: favorite === 'true' || favorite === true,
+      photoPath, thumbPath,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
     };
-
     const wardrobe = readJSON(WARDROBE_FILE);
     wardrobe.push(item);
     writeJSON(WARDROBE_FILE, wardrobe);
     res.json(item);
   } catch (err) {
-    console.error('新增衣物出错:', err);
     res.status(500).json({ message: '服务器错误: ' + err.message });
   }
 });
@@ -274,7 +269,7 @@ app.patch('/api/clothes/:id/favorite', requireAdmin, (req, res) => {
   res.json({ id: wardrobe[idx].id, favorite: wardrobe[idx].favorite });
 });
 
-// PUT /api/clothes/:id — 接收 photo + thumb 双字段
+// PUT /api/clothes/:id
 app.put('/api/clothes/:id', requireAdmin, uploadFields, (req, res) => {
   try {
     const wardrobe = readJSON(WARDROBE_FILE);
@@ -285,18 +280,10 @@ app.put('/api/clothes/:id', requireAdmin, uploadFields, (req, res) => {
     const { name, clothingType, member, size, color, brand, notes, status, seasons, favorite } = req.body;
     const { photoPath: newPhoto, thumbPath: newThumb } = extractPaths(req);
 
-    // 有新图片时删除旧文件
     let photoPath = existing.photoPath;
     let thumbPath = existing.thumbPath || null;
-
-    if (newPhoto) {
-      deleteFile(existing.photoPath);
-      photoPath = newPhoto;
-    }
-    if (newThumb) {
-      deleteFile(existing.thumbPath);
-      thumbPath = newThumb;
-    }
+    if (newPhoto) { deleteFile(existing.photoPath); photoPath = newPhoto; }
+    if (newThumb) { deleteFile(existing.thumbPath); thumbPath = newThumb; }
 
     let seasonsArrPut = existing.seasons || [];
     if (seasons !== undefined) {
@@ -318,15 +305,12 @@ app.put('/api/clothes/:id', requireAdmin, uploadFields, (req, res) => {
       favorite:      favorite !== undefined
                        ? (favorite === 'true' || favorite === true)
                        : (existing.favorite || false),
-      photoPath,
-      thumbPath,
-      updatedAt:     new Date().toISOString()
+      photoPath, thumbPath,
+      updatedAt: new Date().toISOString()
     };
-
     writeJSON(WARDROBE_FILE, wardrobe);
     res.json(wardrobe[idx]);
   } catch (err) {
-    console.error('修改衣物出错:', err);
     res.status(500).json({ message: '服务器错误: ' + err.message });
   }
 });
@@ -338,8 +322,7 @@ app.delete('/api/clothes/:id', requireAdmin, (req, res) => {
   if (!item) return res.status(404).json({ message: '衣物不存在' });
   deleteFile(item.photoPath);
   deleteFile(item.thumbPath);
-  wardrobe = wardrobe.filter(c => c.id !== req.params.id);
-  writeJSON(WARDROBE_FILE, wardrobe);
+  writeJSON(WARDROBE_FILE, wardrobe.filter(c => c.id !== req.params.id));
   res.json({ success: true });
 });
 

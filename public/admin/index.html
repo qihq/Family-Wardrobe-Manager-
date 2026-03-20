@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理端 · 家庭衣橱</title>
+  <link rel="stylesheet" href="/public/shared/style.css">
+  <style>
+    .admin-layout { display: flex; min-height: 100vh; }
+    .admin-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .admin-content { padding: 24px; flex: 1; }
+    .admin-topbar {
+      height: var(--navbar-h); background: var(--bg-card);
+      border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 40;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; box-shadow: var(--shadow-sm);
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* 桌面两栏新增面板 */
+    .add-panel-layout { display: grid; grid-template-columns: 4fr 6fr; gap: 24px; align-items: start; }
+    .add-panel-left .upload-area { min-height: 360px; }
+    .add-panel-mobile-steps { display: none; }
+    .add-panel-desktop { display: block; }
+
+    /* 手机端切换 */
+    @media (min-width: 768px) {
+      .navbar.admin-navbar { display: none !important; }
+      .hamburger-btn { display: none !important; }
+    }
+    @media (max-width: 767px) {
+      .add-panel-desktop { display: none !important; }
+      .add-panel-mobile-steps { display: block !important; }
+      .admin-content { padding: 12px 12px 80px; }
+      .filter-row-desktop { display: none !important; }
+      .filter-btn-mobile { display: flex !important; }
+      .admin-topbar { display: none; }
+    }
+
+    /* 上传区 */
+    .upload-area-full {
+      min-height: 260px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+      border: 2px dashed var(--border); border-radius: var(--radius-lg);
+      background: var(--bg-page); cursor: pointer; position: relative;
+      transition: all var(--transition); padding: 24px;
+    }
+    .upload-area-full:hover, .upload-area-full.dragover { border-color: var(--primary); background: var(--primary-light); }
+    .upload-area-full input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-area-full .upload-icon-lg { font-size: 3.5rem; }
+    .upload-area-full .upload-title { font-size: 1.05rem; font-weight: 700; }
+    .step-nav { display: flex; gap: 12px; justify-content: space-between; padding: 16px 0 4px; }
+    .type-btn-group-2col { grid-template-columns: repeat(2, 1fr) !important; }
+    .mobile-filter-trigger { display: flex; gap: 8px; align-items: center; overflow-x: auto; scrollbar-width: none; padding: 10px 0 6px; }
+    .mobile-filter-trigger::-webkit-scrollbar { display: none; }
+
+    /* 收藏开关 */
+    .favorite-toggle-label {
+      display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+      padding: 8px 16px; border: 2px solid var(--border); border-radius: var(--radius-full);
+      font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);
+      transition: all var(--transition); min-height: 42px; user-select: none;
+      white-space: nowrap;
+    }
+    .favorite-toggle-label:has(input:checked) { border-color: var(--warning); background: #FEF3E2; color: #C8790A; }
+    .favorite-toggle-label input { display: none; }
+
+    /* 季节 checkbox */
+    .season-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0; }
+    .season-checkbox-label {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+      border: 2px solid var(--border); border-radius: var(--radius-full); background: var(--bg-card);
+      font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);
+      cursor: pointer; transition: all var(--transition); min-height: 42px; user-select: none;
+    }
+    .season-checkbox-label:has(input:checked) { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .season-checkbox { display: none; }
+
+    /* ── 桌面多选筛选胶囊区 ── */
+    .filter-row-desktop {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      align-items: flex-start; padding: 14px 0 0;
+    }
+    .filter-btn-mobile { display: none; }
+
+    /* 筛选维度标签组 */
+    .filter-group {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .filter-group-label {
+      font-size: 0.75rem; font-weight: 700; color: var(--text-hint);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .filter-pills-row {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+
+    /* 重置按钮 */
+    .filter-reset-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 7px 14px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-full); background: var(--bg-card);
+      font-size: 0.82rem; font-weight: 700; color: var(--text-hint);
+      cursor: pointer; transition: all var(--transition);
+      min-height: 36px; white-space: nowrap;
+    }
+    .filter-reset-btn:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-light); }
+    .filter-reset-btn.has-active { border-color: var(--danger); color: var(--danger); background: var(--danger-light); }
+    .filter-reset-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--danger); display: none;
+    }
+    .filter-reset-btn.has-active .filter-reset-dot { display: inline-block; }
+
+    /* 筛选区整体容器 */
+    .filter-toolbar {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px 16px;
+      margin-bottom: 14px; display: flex; flex-wrap: wrap;
+      gap: 14px; align-items: flex-start;
+    }
+    .filter-toolbar-right {
+      margin-left: auto; display: flex; align-items: center; gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 手机顶部 Navbar -->
+<nav class="navbar admin-navbar">
+  <div class="navbar-inner">
+    <button class="hamburger-btn" id="hamburger-btn"><span></span><span></span><span></span></button>
+    <div class="navbar-brand">👕 衣橱管理</div>
+    <div class="navbar-actions">
+      <button class="btn btn-primary btn-sm" id="mobile-add-btn">＋ 新增</button>
+    </div>
+  </div>
+</nav>
+
+<!-- 抽屉菜单 -->
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-brand">👕 衣橱管理</div>
+    <button class="btn-icon" id="drawer-close-btn">✕</button>
+  </div>
+  <nav class="drawer-nav">
+    <div class="drawer-nav-item active" data-panel="panel-clothes"><span class="nav-icon">👕</span> 衣物管理</div>
+    <div class="drawer-nav-item" data-panel="panel-add"><span class="nav-icon">➕</span> 新增衣物</div>
+    <div class="drawer-nav-item" data-panel="panel-members"><span class="nav-icon">👨‍👩‍👦</span> 人员管理</div>
+    <div class="drawer-nav-item" data-panel="panel-stats"><span class="nav-icon">📊</span> 统计概览</div>
+  </nav>
+  <div class="drawer-footer" style="display:flex;flex-direction:column;gap:8px">
+    <a href="/view" target="_blank" class="btn btn-ghost btn-sm" style="width:100%">进入只读端 ↗</a>
+    <button class="btn btn-outline btn-sm" style="width:100%" id="drawer-logout-btn">退出登录</button>
+  </div>
+</div>
+
+<!-- 主体 -->
+<div class="admin-layout">
+  <!-- 侧边栏 -->
+  <aside class="sidenav" id="sidenav">
+    <div class="sidenav-logo">
+      <span class="sidenav-logo-icon">👕</span>
+      <span class="sidenav-logo-text">衣橱管理</span>
+    </div>
+    <nav class="sidenav-nav">
+      <div class="sidenav-item active" data-panel="panel-clothes"><span class="nav-icon">👕</span><span class="nav-label">衣物管理</span></div>
+      <div class="sidenav-item" data-panel="panel-add"><span class="nav-icon">➕</span><span class="nav-label">新增衣物</span></div>
+      <div class="sidenav-item" data-panel="panel-members"><span class="nav-icon">👨‍👩‍👦</span><span class="nav-label">人员管理</span></div>
+      <div class="sidenav-item" data-panel="panel-stats"><span class="nav-icon">📊</span><span class="nav-label">统计概览</span></div>
+    </nav>
+    <div class="sidenav-footer" style="display:flex;flex-direction:column;gap:8px">
+      <a href="/view" target="_blank" class="btn btn-ghost btn-sm" style="width:100%">进入只读端 ↗</a>
+      <button class="btn btn-outline btn-sm" style="width:100%" id="sidenav-logout-btn">退出登录</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <!-- 顶栏 -->
+    <div class="admin-topbar">
+      <div class="breadcrumb">
+        <span>👕 家庭衣橱</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current" id="breadcrumb-current">衣物管理</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <a href="/view" target="_blank" class="btn btn-ghost btn-sm">进入只读端 ↗</a>
+        <button class="btn btn-outline btn-sm" id="topbar-logout-btn">退出</button>
+      </div>
+    </div>
+
+    <div class="admin-content">
+
+      <!-- ══ 衣物管理 ══ -->
+      <div class="panel active" id="panel-clothes">
+
+        <!-- 桌面多选筛选区 -->
+        <div class="filter-row-desktop">
+          <div class="filter-toolbar" id="desktop-filter-toolbar">
+
+            <!-- 搜索框 -->
+            <div class="filter-group" style="flex-shrink:0">
+              <div class="filter-group-label">搜索</div>
+              <input type="text" class="search-input" id="search-input" placeholder="名称/品牌/颜色…" style="width:200px">
+            </div>
+
+            <!-- 人员多选 -->
+            <div class="filter-group">
+              <div class="filter-group-label">人员</div>
+              <div class="filter-pills-row" id="filter-member-pills"></div>
+            </div>
+
+            <!-- 类型多选 -->
+            <div class="filter-group">
+              <div class="filter-group-label">类型</div>
+              <div class="filter-pills-row" id="filter-type-pills"></div>
+            </div>
+
+            <!-- 季节多选 -->
+            <div class="filter-group">
+              <div class="filter-group-label">季节</div>
+              <div class="filter-pills-row" id="filter-season-pills"></div>
+            </div>
+
+            <!-- 状态多选 -->
+            <div class="filter-group">
+              <div class="filter-group-label">状态</div>
+              <div class="filter-pills-row" id="filter-status-pills"></div>
+            </div>
+
+            <!-- 收藏 + 重置 + 新增 -->
+            <div class="filter-toolbar-right">
+              <label class="favorite-toggle-label">
+                <input type="checkbox" id="filter-fav"> ⭐ 收藏
+              </label>
+              <button class="filter-reset-btn" id="desktop-filter-reset-btn">
+                <span class="filter-reset-dot"></span>重置筛选
+              </button>
+              <button class="btn btn-primary" id="goto-add-btn">＋ 新增衣物</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 手机筛选触发行 -->
+        <div class="filter-btn-mobile mobile-filter-trigger">
+          <button class="btn btn-ghost btn-sm" id="open-admin-filter-btn" style="flex-shrink:0">🔍 筛选</button>
+          <input type="text" class="search-input" id="search-input-mobile"
+            placeholder="搜索…" style="flex:1;min-width:100px;width:auto">
+          <div id="admin-active-tags" style="display:flex;gap:6px;flex-shrink:0"></div>
+        </div>
+        <!-- 手机排序胶囊 -->
+        <div class="mobile-sort-bar" id="mobile-sort-bar"></div>
+
+        <!-- 桌面表格 -->
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr>
+                <th style="width:56px">图片</th>
+                <th class="sortable-th" data-sort="name">名称<span class="sort-icon">⇅</span></th>
+                <th class="sortable-th" data-sort="clothingType">类型<span class="sort-icon">⇅</span></th>
+                <th class="sortable-th" data-sort="member">使用人<span class="sort-icon">⇅</span></th>
+                <th class="sortable-th" data-sort="size">尺码<span class="sort-icon">⇅</span></th>
+                <th class="sortable-th" data-sort="color">颜色<span class="sort-icon">⇅</span></th>
+                <th class="sortable-th" data-sort="brand">品牌<span class="sort-icon">⇅</span></th>
+                <th class="sortable-th" data-sort="seasons">季节<span class="sort-icon">⇅</span></th>
+                <th class="sortable-th" data-sort="status">状态<span class="sort-icon">⇅</span></th>
+                <th class="sortable-th" data-sort="favorite">收藏<span class="sort-icon">⇅</span></th>
+                <th class="sortable-th" data-sort="createdAt">录入日期<span class="sort-icon">⇅</span></th>
+                <th style="width:110px">操作</th>
+              </tr></thead>
+              <tbody id="clothes-tbody">
+                <tr><td colspan="12"><div class="loading-overlay"><div class="spinner"></div>加载中…</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 手机卡片列表 -->
+        <div class="mobile-clothes-list" id="mobile-clothes-list" style="margin-top:10px"></div>
+      </div>
+
+      <!-- ══ 新增衣物 ══ -->
+      <div class="panel" id="panel-add">
+        <!-- 桌面两栏 -->
+        <div class="add-panel-desktop">
+          <div class="add-panel-layout">
+            <div class="add-panel-left card">
+              <div class="card-header">📷 上传图片</div>
+              <div class="card-body">
+                <div class="upload-area" id="upload-area">
+                  <input type="file" id="photo-input" accept="image/*" capture="environment">
+                  <div class="upload-icon">📷</div>
+                  <div style="font-weight:600">点击拍照或选择图片</div>
+                  <div class="upload-hint">支持拖拽 · 选择后自动压缩优化</div>
+                </div>
+                <div id="add-compress-status"></div>
+                <div id="photo-preview"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">📝 填写信息</div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">衣物类型 <span class="required">*</span></label>
+                  <div class="type-btn-group" id="type-btn-group"></div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">适穿季节</label>
+                  <div class="season-checkbox-group" id="add-season-group">
+                    <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="春"> 春</label>
+                    <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="夏"> 夏</label>
+                    <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="秋"> 秋</label>
+                    <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="冬"> 冬</label>
+                    <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="四季"> 四季</label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="favorite-toggle-label"><input type="checkbox" id="add-favorite"> ⭐ 标记为收藏</label>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">适用人员 <span class="required">*</span></label><select class="form-control" id="add-member"><option value="">请选择</option></select></div>
+                  <div class="form-group"><label class="form-label">衣物名称</label><input type="text" class="form-control" id="add-name" placeholder="如：蓝色条纹T恤"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">尺码</label><input type="text" class="form-control" id="add-size" placeholder="如：120 / M"></div>
+                  <div class="form-group"><label class="form-label">颜色</label><input type="text" class="form-control" id="add-color" placeholder="如：藏青色"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">品牌</label><input type="text" class="form-control" id="add-brand" placeholder="如：安踏"></div>
+                  <div class="form-group"><label class="form-label">状态</label><select class="form-control" id="add-status"><option>在用</option><option>闲置</option><option>已淘汰</option></select></div>
+                </div>
+                <div class="form-group"><label class="form-label">备注</label><textarea class="form-control" id="add-notes" placeholder="可选"></textarea></div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+                  <button class="btn btn-ghost" id="add-reset-btn">重置</button>
+                  <button class="btn btn-primary btn-lg" id="add-submit-btn">保存衣物</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 手机分步 -->
+        <div class="add-panel-mobile-steps">
+          <div class="step-indicator">
+            <div class="step-dot active" id="step-dot-0"></div>
+            <div class="step-dot" id="step-dot-1"></div>
+            <div class="step-dot" id="step-dot-2"></div>
+          </div>
+          <div class="step-panel active" id="step-panel-0">
+            <div class="upload-area-full" id="upload-area-mobile">
+              <input type="file" id="photo-input-mobile" accept="image/*" capture="environment">
+              <div class="upload-icon-lg">📷</div>
+              <div class="upload-title">拍照或选择图片</div>
+              <div class="upload-hint">选择后自动压缩优化</div>
+            </div>
+            <div id="mob-compress-status"></div>
+            <div id="photo-preview-mobile" style="text-align:center;margin-top:12px"></div>
+            <div class="step-nav"><div></div><button class="btn btn-primary" id="step0-next-btn">下一步 →</button></div>
+          </div>
+          <div class="step-panel" id="step-panel-1">
+            <div style="font-size:1rem;font-weight:700;margin-bottom:12px">选择衣物类型 <span style="color:var(--danger)">*</span></div>
+            <div class="type-btn-group type-btn-group-2col" id="type-btn-group-mobile"></div>
+            <div style="margin-top:16px;font-size:0.95rem;font-weight:700">适穿季节</div>
+            <div class="season-checkbox-group" id="add-season-group-mobile" style="margin-top:8px">
+              <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="春"> 春</label>
+              <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="夏"> 夏</label>
+              <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="秋"> 秋</label>
+              <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="冬"> 冬</label>
+              <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="四季"> 四季</label>
+            </div>
+            <div class="step-nav">
+              <button class="btn btn-ghost" id="step1-prev-btn">← 上一步</button>
+              <button class="btn btn-primary" id="step1-next-btn">下一步 →</button>
+            </div>
+          </div>
+          <div class="step-panel" id="step-panel-2">
+            <div class="form-group"><label class="form-label">适用人员 <span class="required">*</span></label><select class="form-control" id="add-member-mobile"><option value="">请选择</option></select></div>
+            <div class="form-group"><label class="form-label">衣物名称</label><input type="text" class="form-control" id="add-name-mobile" placeholder="如：蓝色条纹T恤"></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">尺码</label><input type="text" class="form-control" id="add-size-mobile"></div>
+              <div class="form-group"><label class="form-label">颜色</label><input type="text" class="form-control" id="add-color-mobile"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">品牌</label><input type="text" class="form-control" id="add-brand-mobile"></div>
+              <div class="form-group"><label class="form-label">状态</label><select class="form-control" id="add-status-mobile"><option>在用</option><option>闲置</option><option>已淘汰</option></select></div>
+            </div>
+            <div class="form-group"><label class="form-label">备注</label><textarea class="form-control" id="add-notes-mobile"></textarea></div>
+            <div class="form-group"><label class="favorite-toggle-label"><input type="checkbox" id="add-favorite-mobile"> ⭐ 标记为收藏</label></div>
+            <div class="step-nav">
+              <button class="btn btn-ghost" id="step2-prev-btn">← 上一步</button>
+              <button class="btn btn-primary btn-lg" id="add-submit-mobile-btn">✅ 保存衣物</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ 人员管理 ══ -->
+      <div class="panel" id="panel-members">
+        <div class="card" style="max-width:520px">
+          <div class="card-header">👨‍👩‍👦 适用人员管理</div>
+          <div class="card-body">
+            <div class="member-list" id="member-list"><div class="loading-overlay"><div class="spinner"></div></div></div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input type="text" class="form-control" id="new-member-input" placeholder="输入新人员姓名">
+              <button class="btn btn-primary" id="add-member-btn" style="white-space:nowrap">＋ 添加</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ 统计概览 ══ -->
+      <div class="panel" id="panel-stats">
+        <h2 style="margin-bottom:16px;font-size:1.1rem;font-weight:800">📊 统计概览</h2>
+        <div class="stat-grid" id="stat-grid"><div class="loading-overlay"><div class="spinner"></div></div></div>
+        <div class="stat-detail-panel" id="stat-detail-panel">
+          <div class="stat-detail-title">
+            <span id="stat-detail-title-text"></span>
+            <button class="stat-detail-close" id="stat-detail-close">✕</button>
+          </div>
+          <div class="clothes-grid" id="stat-detail-grid"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- 手机底部导航 -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <div class="bottom-nav-item active" data-panel="panel-clothes"><span class="nav-icon">👕</span>衣物</div>
+    <div class="bottom-nav-item" data-panel="panel-add"><span class="nav-icon">➕</span>新增</div>
+    <div class="bottom-nav-item" data-panel="panel-members"><span class="nav-icon">👨‍👩‍👦</span>人员</div>
+    <div class="bottom-nav-item" data-panel="panel-stats"><span class="nav-icon">📊</span>统计</div>
+  </div>
+</nav>
+
+<!-- 编辑弹窗 -->
+<div class="modal-overlay" id="edit-modal-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><span>编辑衣物</span><button class="btn-icon" id="edit-modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">更换图片（留空保留原图）</label>
+        <div class="upload-area" id="edit-upload-area">
+          <input type="file" id="edit-photo-input" accept="image/*" capture="environment">
+          <div class="upload-icon">📷</div>
+          <div style="font-weight:600">点击更换图片（选后自动压缩）</div>
+        </div>
+        <div id="edit-compress-status"></div>
+        <div id="edit-photo-preview"></div>
+      </div>
+      <div class="form-group"><label class="form-label">衣物类型 <span class="required">*</span></label><div class="type-btn-group" id="edit-type-btn-group"></div></div>
+      <div class="form-group">
+        <label class="form-label">适穿季节</label>
+        <div class="season-checkbox-group" id="edit-season-group">
+          <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="春"> 春</label>
+          <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="夏"> 夏</label>
+          <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="秋"> 秋</label>
+          <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="冬"> 冬</label>
+          <label class="season-checkbox-label"><input type="checkbox" class="season-checkbox" value="四季"> 四季</label>
+        </div>
+      </div>
+      <div class="form-group"><label class="favorite-toggle-label"><input type="checkbox" id="edit-favorite"> ⭐ 标记为收藏</label></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">适用人员 <span class="required">*</span></label><select class="form-control" id="edit-member"></select></div>
+        <div class="form-group"><label class="form-label">衣物名称</label><input type="text" class="form-control" id="edit-name"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">尺码</label><input type="text" class="form-control" id="edit-size"></div>
+        <div class="form-group"><label class="form-label">颜色</label><input type="text" class="form-control" id="edit-color"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">品牌</label><input type="text" class="form-control" id="edit-brand"></div>
+        <div class="form-group"><label class="form-label">状态</label><select class="form-control" id="edit-status"><option>在用</option><option>闲置</option><option>已淘汰</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">备注</label><textarea class="form-control" id="edit-notes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="edit-cancel-btn">取消</button>
+      <button class="btn btn-primary" id="edit-save-btn">保存修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- 删除确认 -->
+<div class="modal-overlay" id="del-modal-overlay">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><span>确认删除</span><button class="btn-icon" onclick="WardrobeUtils.closeModal('del-modal-overlay')">✕</button></div>
+    <div class="modal-body" id="del-modal-body">确定要删除这件衣物吗？此操作不可撤销。</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="WardrobeUtils.closeModal('del-modal-overlay')">取消</button>
+      <button class="btn btn-danger" id="del-confirm-btn">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin 详情弹窗 -->
+<div class="modal-overlay" id="admin-detail-modal-overlay">
+  <div class="modal" id="admin-detail-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span id="admin-detail-title">衣物详情</span>
+      <button class="btn-icon" id="admin-detail-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-photo-wrap" id="admin-detail-photo"></div>
+      <div id="admin-detail-fields"></div>
+      <div class="admin-detail-actions">
+        <button class="btn btn-outline" id="admin-detail-edit-btn" style="flex:1">✏️ 编辑</button>
+        <button class="btn btn-danger" id="admin-detail-delete-btn" style="flex:1">🗑️ 删除</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="admin-detail-close2">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 手机筛选 Sheet（多选版） -->
+<div class="bottom-sheet-overlay" id="admin-filter-overlay"></div>
+<div class="bottom-sheet" id="admin-filter-sheet">
+  <div class="bottom-sheet-handle"></div>
+  <div class="bottom-sheet-header">
+    <span>筛选</span>
+    <button class="btn-icon" id="close-admin-filter-btn">✕</button>
+  </div>
+  <div class="bottom-sheet-body">
+    <div class="filter-sheet-row"><div class="filter-sheet-label">适用人员</div><div class="filter-sheet-pills" id="admin-sheet-member-pills"></div></div>
+    <div class="filter-sheet-row"><div class="filter-sheet-label">衣物类型</div><div class="filter-sheet-pills" id="admin-sheet-type-pills"></div></div>
+    <div class="filter-sheet-row"><div class="filter-sheet-label">适穿季节</div><div class="filter-sheet-pills" id="admin-sheet-season-pills"></div></div>
+    <div class="filter-sheet-row"><div class="filter-sheet-label">状态</div><div class="filter-sheet-pills" id="admin-sheet-status-pills"></div></div>
+  </div>
+  <div class="bottom-sheet-footer">
+    <button class="btn btn-ghost" id="admin-filter-reset-btn">重置筛选</button>
+    <button class="btn btn-primary" id="admin-filter-apply-btn">查看结果</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="/public/shared/utils.js"></script>
+<script src="/public/admin/admin.js"></script>
+</body>
+</html>
