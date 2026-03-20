@@ -1,286 +1,354 @@
-# 家庭衣橱管理系统 — 完整项目开发记录
+# 用 AI 做项目全程记录：家庭衣橱管理系统
+# Building a Project with AI: Family Wardrobe Management System
 
-> 平台：群晖 NAS · Docker · Node.js + 纯 HTML/JS · JSON 存储
-> 时间：2026年3月19日
-
----
-
-## 一、项目起源与需求分析
-
-### 原始需求
-家里有两个儿子，购置了大量衣服、裤子、鞋子，家里阿姨不清楚有哪些衣物可用。需要一个简单的衣橱管理系统，方便主人录入管理、阿姨只读查阅。
-
-### 核心功能需求
-- 支持拍照或上传图片，自动识别衣物类型（可人工修改）
-- 可手动编辑：衣物名称、类型、尺码、颜色、品牌、适用人员、备注、状态
-- 适用人员支持自定义管理（增删改），初始设「大儿子」「小儿子」
-- 图片按规则分类保存：`/photos/{适用人员}/{衣物类型}/文件名.jpg`
-- 双界面：管理端（需密码登录）+ 只读端（阿姨使用）
-- 支持按使用人、类型、状态筛选和关键词搜索
+> 作者备注 / Author's Note：本文记录了从零开始，通过与 AI 对话完成一个真实项目的全过程。
+> This document records the entire process of building a real project from scratch through AI conversation.
 
 ---
 
-## 二、技术选型讨论
+## 一、项目背景 / Project Background
 
-### 为什么不用纯 HTML+JS？
-浏览器安全限制，纯静态 HTML+JS 无法在服务器端写入文件或修改 JSON：
+**中文：**
+家里有两个儿子，购置了大量衣服、裤子、鞋子，家里阿姨不清楚有哪些衣物可用。需要一个简单的衣橱管理系统，方便主人录入管理、阿姨只读查阅。系统部署在家里的群晖 NAS 上，局域网内使用。
 
-| 能力 | 纯静态 HTML+JS | 需要后端 |
-|------|--------------|---------|
-| 展示图片、筛选浏览 | ✅ | ✅ |
-| 上传图片到 NAS | ❌ | ✅ |
-| 保存数据到 JSON | ❌ | ✅ |
-| 离线图像识别 | ✅ | ✅ |
-| 双界面权限控制 | ⚠️ 很弱 | ✅ |
-
-### 最终技术栈
-- **后端**：Node.js（极简 express）
-- **数据存储**：JSON 文件（不使用任何数据库）
-- **前端**：纯 HTML + CSS + JavaScript，无框架
-- **图像识别**：浏览器端 TensorFlow.js + MobileNet（完全离线）
-- **图片存储**：NAS 本地文件夹
-- **界面语言**：中文
+**English：**
+With two sons at home and a large collection of clothes, pants, and shoes, the housekeeper had no way to know what was available. The goal was to build a simple wardrobe management system — an admin interface for the owner to manage items, and a read-only interface for the housekeeper. The system runs on a Synology NAS at home, used only on the local network.
 
 ---
 
-## 三、初版 Claude 提示词
+## 二、技术选型讨论 / Tech Stack Discussion
 
-你是一名全栈开发工程师，我需要你帮我开发一个运行在群晖 NAS Web Station + Node.js 上的家庭衣橱管理网站。
+**中文：**
+最初希望用纯 HTML+JS 实现，AI 解释了浏览器安全限制后，确定了最终方案。
 
-技术栈要求（不可更改）：
+**English：**
+The initial idea was to use pure HTML+JS. After AI explained browser security limitations, the final stack was determined.
 
-后端：Node.js（使用内置 http 模块或极简 express）
+| 能力 / Capability | 纯静态 HTML+JS / Pure Static | 需要后端 / Needs Backend |
+|---|---|---|
+| 展示图片、筛选浏览 / Display & filter | ✅ | ✅ |
+| 上传图片到 NAS / Upload to NAS | ❌ | ✅ |
+| 保存数据到文件 / Save data to file | ❌ | ✅ |
+| 离线图像识别 / Offline image recognition | ✅ | ✅ |
+| 双界面权限控制 / Dual interface auth | ⚠️ 很弱 / Weak | ✅ |
 
-数据存储：JSON 文件（不使用任何数据库，包括 SQLite）
-
-前端：纯 HTML + CSS + JavaScript，不使用任何前端框架
-
-图像识别：完全离线，使用浏览器端 TensorFlow.js + MobileNet 模型
-
-图片存储：/photos/{适用人员}/{衣物类型}/文件名.jpg
-
-界面语言：中文
-
-核心功能需求：
-
-衣物录入主流程（重要）：
-
-拍照或上传图片后，首先展示一排大按钮供用户点击选择衣物类型（上衣/裤子/鞋子/外套/其他）
-
-同时显示 TensorFlow.js + MobileNet 离线 AI 识别建议（标注「AI 参考」）
-
-手动选择优先级高于 AI 识别结果
-
-适用人员管理：可自定义增删改，初始设「大儿子」「小儿子」
-
-双界面设计：
-
-管理端 /admin：需密码登录，支持完整增删改查
-
-只读端 /view：无需登录，阿姨专用，卡片式展示，字体适当放大
-
-交付要求：
-
-完整项目目录结构
-
-群晖 NAS Web Station 部署步骤
-
-移动端和桌面端响应式适配
-
-请先输出项目架构，确认后再逐模块输出代码
-
-text
+**最终技术栈 / Final Stack：**
+- 后端 / Backend：Node.js + Express（极简 / minimal）
+- 数据存储 / Storage：JSON 文件（无数据库 / no database）
+- 前端 / Frontend：纯 HTML + CSS + JavaScript（无框架 / no framework）
+- 图像识别 / Image recognition：TensorFlow.js + MobileNet（完全离线 / fully offline）
+- 图片存储 / Photo storage：NAS 本地文件夹 / local NAS folder
+- 部署 / Deployment：群晖 Docker / Synology Docker
 
 ---
 
-## 四、响应式布局方案
+## 三、初版需求提示词 / Initial Prompt to Claude
 
-### 三档适配设计
+**中文说明：** 以下是发给 Claude 的完整提示词，产品经理视角整理需求。
+**English note:** The following is the complete prompt sent to Claude, organized from a product manager's perspective.
 
-**桌面端（≥1024px）**
-- 左侧固定侧边栏 220px，包含 Logo、导航菜单、退出按钮
-- 右侧内容区 calc(100% - 220px)
-- 衣物列表用表格视图
-- 新增面板两栏：左图片（40%）+ 右表单（60%）
-- 筛选栏横向一行排开
+```
+你是一名全栈开发工程师，我需要你帮我开发一个运行在群晖 NAS Web Station + Node.js
+上的家庭衣橱管理网站。
 
-**平板端（768px~1023px）**
-- 侧边栏收窄为 64px 图标模式，hover 展开到 220px
-- 衣物卡片网格：3 列
+You are a full-stack engineer. Help me build a family wardrobe management website
+running on Synology NAS Web Station + Node.js.
 
-**手机端（≤767px）**
-- 顶部 Logo + 新增按钮 + 汉堡菜单
-- 汉堡菜单点击弹出全屏抽屉（左侧滑入）
-- 新增衣物分三步：① 拍照上传 → ② 选择类型 → ③ 填写信息
-- View 端底部固定 Tab 栏切换人员
-- 点击卡片弹出 Bottom Sheet 详情
+技术栈要求（不可更改）/ Tech stack (non-negotiable):
+- 后端 / Backend: Node.js + Express
+- 数据存储 / Storage: JSON files (no database)
+- 前端 / Frontend: Pure HTML + CSS + JavaScript, no frameworks
+- 图像识别 / Image recognition: TensorFlow.js + MobileNet, fully offline
+- 图片路径 / Photo path: /photos/{member}/{type}/filename.jpg
+- 界面语言 / Language: 中文 Chinese
 
-### 新增交互组件
-- **Bottom Sheet**：底部滑入面板，用于筛选和详情
-- **抽屉菜单**：手机端管理端导航
-- **分步录入进度条**：三步骤圆点进度指示
+核心功能 / Core features:
+
+1. 衣物录入 / Clothing entry:
+   - 拍照上传后，先展示大按钮选类型（主流程）
+   - After photo upload, show large type-selection buttons (main flow)
+   - AI 识别结果作为辅助参考 / AI recognition as reference only
+   - 字段 / Fields: 名称 name、类型 type、尺码 size、颜色 color、
+     品牌 brand、适用人员 member、备注 notes、状态 status
+
+2. 适用人员管理 / Member management:
+   - 可自定义增删改 / Customizable CRUD
+   - 初始：大儿子、小儿子 / Default: Son1, Son2
+
+3. 双界面 / Dual interface:
+   - 管理端 /admin：密码登录，完整增删改查
+   - Admin /admin: password login, full CRUD
+   - 只读端 /view：无需登录，阿姨使用，卡片式展示
+   - Read-only /view: no login, housekeeper use, card grid
+
+4. 筛选搜索 / Filter & search:
+   - 按人员、类型、状态、季节筛选
+   - Filter by member, type, status, season
+   - 关键词搜索 / Keyword search
+
+请先输出项目架构，确认后再逐模块输出代码。
+Output project architecture first, then code module by module after confirmation.
+```
 
 ---
 
-## 五、第一轮迭代需求（功能完善）
+## 四、响应式布局方案 / Responsive Layout
 
-### 需求清单
-1. **季节筛选 Bug**：单独选「春」时，seasons 含「四季」的衣物不显示
-2. **Admin ↔ View 互相跳转入口**
-3. **Admin 登录态持久化**（localStorage，刷新不需重新登录）
-4. **新增 favorite（收藏）属性**，筛选、卡片、统计全适配
-5. **View 端尺寸显示强化**（大号字体 + 品牌色 badge）
-6. **Admin 端点击图片或空白显示衣物详情**（与 view 端详情一致，含编辑/删除按钮）
-7. **统计页面点击数字显示对应衣物列表**，可点开详情
+**中文：** AI 提出了三档响应式设计方案。
+**English:** AI proposed a three-tier responsive design.
 
-### 数据兼容性要求
-- 系统已有真实数据在 wardrobe.json，任何改动不得导致现有数据丢失
-- 新增字段在旧数据中不存在时，默认为 false 或空值
-- server.js 不得有重置或清空 JSON 数据的逻辑
+### 桌面端 ≥1024px / Desktop
 
-### 发给 Claude 的提示词
+**中文：** 左侧固定侧边栏 220px，右侧内容区，衣物列表用表格，新增面板两栏布局。
+**English:** Fixed left sidebar 220px, right content area, table view for clothes list, two-column add panel.
 
-以下是对现有家庭衣橱管理系统的迭代需求。请在不破坏现有 wardrobe.json 数据结构的前提下进行升级，所有新字段对旧数据向后兼容。
+### 平板端 768px~1023px / Tablet
 
-数据兼容性要求（最高优先级）：
+**中文：** 侧边栏收窄为图标模式（64px），hover 展开；卡片三列。
+**English:** Sidebar collapsed to icon mode (64px), expands on hover; 3-column card grid.
 
-新增字段（如 favorite）在旧数据中不存在时，默认为 false 或空值
+### 手机端 ≤767px / Mobile
 
-server.js 不得有重置或清空 JSON 数据的逻辑
+**中文：** 汉堡菜单 + 抽屉导航；新增衣物分三步录入；View 端底部 Tab 切换人员；详情用 Bottom Sheet。
+**English:** Hamburger menu + drawer nav; 3-step add flow; bottom tab bar for member switching in view; Bottom Sheet for details.
 
-Bug 修复：
+---
 
-季节筛选逻辑：seasons 包含「四季」的衣物在任意单季筛选下都应显示
+## 五、第一轮迭代 / First Iteration
 
-新增功能：
-2. Admin ↔ View 互相跳转入口
-3. Admin 登录态持久化（localStorage）
-4. favorite 收藏属性（全端适配）
-5. View 端尺寸显示强化
+**中文：** 系统上线并导入真实数据后，发现以下问题和新需求。
+**English:** After going live and importing real data, the following issues and new requirements were identified.
+
+### 需求清单 / Requirements
+
+| # | 需求 / Requirement | 说明 / Notes |
+|---|---|---|
+| 1 | 季节筛选 Bug | 选「春」时「四季」衣物不显示 / Items with "All Seasons" don't show when filtering "Spring" |
+| 2 | Admin ↔ View 互跳 | 两端互相加入口 / Add navigation links between both interfaces |
+| 3 | 登录态持久化 | localStorage 保存登录，刷新不重登 / Save login to localStorage |
+| 4 | 收藏属性 favorite | 全端适配筛选和展示 / Full integration across filter and display |
+| 5 | 尺寸显示强化 | View 端尺寸用大号 badge 突出 / Highlight size with large badge in view |
+| 6 | Admin 点击显示详情 | 点图片或空白弹出详情面板 / Click photo or row to show detail panel |
+| 7 | 统计点击跳衣物列表 | 点数字显示对应衣物 / Click stat number to show filtered clothes |
+
+### 发给 Claude 的提示词 / Prompt sent to Claude
+
+```
+以下是对现有家庭衣橱管理系统的迭代需求。
+The following are iteration requirements for the existing wardrobe system.
+
+数据兼容性要求（最高优先级）/ Data compatibility (highest priority):
+- 系统已有真实数据，任何改动不得导致数据丢失
+- Real data exists; no changes should cause data loss
+- 新字段旧数据中不存在时默认 false 或空值
+- New fields default to false/empty when absent in old data
+- server.js 不得有重置或清空数据的逻辑
+- server.js must not contain any data reset logic
+
+Bug 修复 / Bug fix:
+1. 季节筛选：seasons 含「四季」的衣物在任意单季筛选下都应显示
+   Season filter: items with "All Seasons" should show under any single-season filter
+
+新增功能 / New features:
+2. Admin ↔ View 互相跳转入口 / Navigation links between Admin and View
+3. Admin 登录态持久化 / Admin login persistence via localStorage
+4. favorite 收藏属性全端适配 / favorite property across all interfaces
+5. View 端尺寸显示强化 / Enhanced size display in View
 6. Admin 端点击衣物显示详情（含编辑/删除）
+   Admin click-to-detail (with edit/delete buttons)
 7. 统计数字点击显示对应衣物列表
+   Stats number click shows filtered clothes list
 
-交付要求：
-
-先列出所有需要修改的文件名
-
-逐文件输出完整代码
-
-新字段全部给默认值兜底
-
-text
+交付要求 / Delivery:
+- 先列文件清单，确认后逐文件输出完整代码
+- List files first, then output complete code file by file
+- 新字段全部给默认值兜底 / All new fields must have safe defaults
+```
 
 ---
 
-## 六、Bug 修复：「四季季」显示问题
+## 六、遇到的 Bug 及解决 / Bugs & Fixes
 
-### 问题原因
-`renderStats` 函数中季节 label 拼接逻辑：
+### Bug 1：「四季季」显示问题 / "四季季" display bug
 
+**中文：** 统计页面「四季」显示成了「四季季」，原因是代码在所有季节名称后拼接了「季」字。
+**English:** The stats page showed "四季季" (redundant character). The cause was code appending "季" to all season names including "四季" which already ends with "季".
+
+**错误代码 / Bug code:**
 ```javascript
-// 错误写法
-...U.SEASONS.map(s => ({ num: bySeason[s] || 0, label: s + '季', filter: { season: s } }))
-// 「四季」+ 「季」= 「四季季」
-修复方案
-javascript
-// 修复后
-...U.SEASONS.map(s => ({ num: bySeason[s] || 0, label: s.endsWith('季') ? s : s + '季', filter: { season: s } }))
-根本原因
-Docker 部署时未映射对应 JS 文件到宿主机，导致修改未生效。
+label: s + '季'  // 「四季」+「季」=「四季季」
+```
 
-七、Docker 部署文件映射问题
-问题
-Docker volume 映射漏掉了部分 JS 文件，宿主机修改不生效。
+**修复代码 / Fix:**
+```javascript
+label: s.endsWith('季') ? s : s + '季'
+```
 
-解决方案
-推荐：映射整个项目目录
+---
 
-text
+### Bug 2：Docker 文件映射缺失 / Missing Docker volume mapping
+
+**中文：** 修改了宿主机的 JS 文件，但容器里跑的还是旧代码。原因是 docker-compose.yml 没有映射该文件。
+**English:** Modified JS files on the host didn't take effect because the docker-compose.yml didn't map those files into the container.
+
+**解决方案 / Solution:**
+```yaml
+# 推荐：映射整个项目目录 / Recommended: map entire project directory
 volumes:
   - /your/nas/path/wardrobe:/app
-或补充单个文件映射
+```
 
-text
-volumes:
-  - /your/nas/path/admin.js:/app/admin.js
-改完后重启容器
-
-bash
+```bash
+# 重启容器 / Restart container
 docker-compose down && docker-compose up -d
-八、第二轮迭代需求（性能优化）
-需求分析
-图片加载优化
-现状：列表加载完整原图（2.5MB），衣物多了会很卡
+```
 
-方案：上传时生成缩略图，列表用缩略图，详情页用原图
+---
 
-上传图片压缩
-现状：手机拍照约 2.5MB，存储和传输浪费
+## 七、第二轮迭代：性能优化 / Second Iteration: Performance
 
-建议：展示图压缩到 ~200KB，缩略图 ~40KB
+**中文：** 随着衣物数量增加，图片加载变慢，需要优化。
+**English:** As the number of items grew, image loading became slow and needed optimization.
 
-用途	建议尺寸	质量	预期大小
-缩略图（列表）	300px	80%	~30KB
-展示图（详情）	1200px 长边	85%	~200KB
-列表排序
-Admin 端衣物列表支持点击列头排序
+### 问题分析 / Problem Analysis
 
-桌面表格列头 + 手机端排序胶囊
+| 问题 / Issue | 现状 / Current | 目标 / Target |
+|---|---|---|
+| 列表图片大小 / List image size | 原图 2.5MB / Original 2.5MB | 缩略图 ~40KB / Thumbnail ~40KB |
+| 上传文件大小 / Upload size | 2.5MB | ~240KB（展示图+缩略图）|
+| 列表排序 / List sorting | 不支持 / Not supported | 列头点击排序 / Click column header |
 
-为什么选择纯前端方案（不用 sharp）
-不需要重建 Docker 镜像
+### 为什么选前端压缩方案 / Why Frontend Compression
 
-不需要进容器安装新包
+**中文：** 不使用 sharp 等 npm 包，避免重建 Docker 镜像。用浏览器 canvas 在前端完成压缩，同时生成展示图和缩略图，通过 FormData 双字段上传。
+**English:** Avoid rebuilding the Docker image by not using npm packages like sharp. Use browser canvas to compress images in the frontend, generate both display and thumbnail images, and upload both via FormData.
 
-前端 canvas 压缩耗时约 0.3~0.5 秒，体验无影响
+**压缩耗时 / Compression time:** ~0.3~0.5 秒（用户几乎感知不到 / barely noticeable）
 
-压缩后上传量从 2.5MB 降到 ~240KB，上传反而更快
+**上传速度对比 / Upload speed comparison:**
 
-最终发给 Claude 的提示词
-text
-对现有家庭衣橱管理系统进行以下三项优化，不得影响现有 wardrobe.json 数据，所有改动向后兼容。不得引入任何新的 npm 包，所有实现使用纯 Node.js 原生 + 浏览器原生 API。
+| | 优化前 / Before | 优化后 / After |
+|---|---|---|
+| 上传大小 / Upload size | 2.5MB | ~240KB |
+| 局域网传输 / LAN transfer | ~1-2秒 | ~0.1秒 |
 
-优化一：前端压缩图片 + 生成缩略图，后端双文件存储
+### 发给 Claude 的提示词 / Prompt sent to Claude
 
-前端压缩逻辑（封装到 utils.js）：
-- 新增 U.compressImage(file, maxEdge, quality)，使用 canvas 压缩
-- 同时生成展示图（maxEdge=1200, quality=0.85）和缩略图（maxEdge=400, quality=0.80）
+```
+对现有家庭衣橱管理系统进行以下三项优化。
+Apply the following three optimizations to the existing wardrobe system.
+
+约束条件 / Constraints:
+- 不得影响现有 wardrobe.json 数据 / Must not affect existing wardrobe.json data
+- 所有改动向后兼容 / All changes must be backward compatible
+- 不得引入任何新 npm 包 / No new npm packages allowed
+- 使用纯 Node.js 原生 + 浏览器原生 API
+  Use pure Node.js native + browser native APIs only
+
+优化一 / Optimization 1: 前端压缩 + 缩略图 / Frontend compression + thumbnail
+
+前端 / Frontend (utils.js):
+- 新增 U.compressImage(file, maxEdge, quality) 使用 canvas 压缩
+- 生成展示图 (1200px, 0.85) 和缩略图 (400px, 0.80)
 - FormData 同时上传 photo 和 thumb 两个字段
-- 压缩期间显示「正在优化图片…」提示，完成后自动提交
-- 适用于所有上传入口：新增桌面版、新增手机分步版、编辑弹窗
+- 压缩期间显示「正在优化图片…」提示
+- 适用所有上传入口（桌面新增、手机分步、编辑弹窗）
 
-后端（server.js，纯 Node.js 原生）：
-- 接收 photo 和 thumb 两个文件字段
-- 展示图：/photos/{人员}/{类型}/文件名.jpg
-- 缩略图：/photos/{人员}/{类型}/thumbs/文件名.jpg
-- wardrobe.json 新增 thumbPath 字段，旧数据无此字段时 fallback photoPath
+后端 / Backend (server.js, pure Node.js):
+- 接收 photo 和 thumb 双字段
+- 展示图路径：/photos/{member}/{type}/filename.jpg
+- 缩略图路径：/photos/{member}/{type}/thumbs/filename.jpg
+- wardrobe.json 新增 thumbPath 字段
+- 旧数据无 thumbPath 时 fallback photoPath
 
-优化二：列表改用缩略图，详情用原图
+优化二 / Optimization 2: 缩略图加载 / Thumbnail loading
 - 列表/卡片加载 thumbPath，fallback photoPath
 - 详情页始终加载原图 photoPath
 - 所有列表图片加 loading="lazy"
 
-优化三：Admin 端列排序
+优化三 / Optimization 3: 列排序 / Column sorting
 - 桌面列头三态：升序↑ → 降序↓ → 取消
 - 手机端横向滚动排序胶囊
 - 前端本地排序，不重新请求接口
 
-交付要求：
+交付 / Delivery:
 - 先列文件清单，确认后逐文件输出完整代码
 - 不引入任何新 npm 依赖
-九、第二轮迭代文件改动清单
-文件	改动内容
-server.js	接收 photo + thumb 双字段，存双路径，thumbPath 写入 wardrobe.json
-public/shared/utils.js	新增 compressImage()，renderClothesCard 用 thumbPath fallback，renderDetailContent 用 photoPath
-public/shared/style.css	排序列头高亮样式，手机端排序胶囊样式，压缩提示样式
-public/admin/admin.js	双图上传逻辑（三处入口）、列排序（桌面三态 + 手机胶囊）
-public/admin/index.html	新增 compress-status 占位元素、手机排序条、列头 sortable-th
-public/view/view.js	卡片用 thumbPath fallback，季节标签修复（顺带修掉四季季 bug）
-共 6 个文件，HTML 结构由 JS 动态注入，data/*.json 数据向后兼容。
+```
 
-十、关键实现细节
-utils.js — compressImage
-javascript
+### 第二轮迭代文件清单 / File List
+
+| 文件 / File | 改动 / Changes |
+|---|---|
+| `server.js` | 双字段接收 + thumbPath 存储 |
+| `public/shared/utils.js` | compressImage() + thumbPath fallback |
+| `public/shared/style.css` | 排序样式 + 压缩提示样式 |
+| `public/admin/admin.js` | 双图上传 + 列排序三态 + 手机胶囊 |
+| `public/admin/index.html` | compress-status 占位 + 排序列头 |
+| `public/view/view.js` | thumbPath fallback + 四季季 bug 修复 |
+
+---
+
+## 八、第三轮迭代：多选筛选 / Third Iteration: Multi-select Filter
+
+**中文：** Admin 端和 View 端的筛选均为单选，需要升级为多选。
+**English:** All filters in Admin and View were single-select and needed to be upgraded to multi-select.
+
+### 筛选逻辑设计 / Filter Logic
+
+**同维度 OR，跨维度 AND / Same-dimension OR, cross-dimension AND**
+
+> 示例 / Example：选「大儿子 + 小儿子」+「裤子」
+> → 显示（大儿子 OR 小儿子）AND 裤子的衣物
+> → Shows items belonging to (Son1 OR Son2) AND of type Pants
+
+未选任何选项的维度 = 不过滤该维度（显示全部）
+Unselected dimensions = no filter applied (show all)
+
+### 发给 Claude 的提示词 / Prompt sent to Claude
+
+```
+对现有家庭衣橱管理系统的筛选功能进行升级，将所有筛选维度从单选改为多选。
+不得影响现有数据，不引入任何新 npm 包。
+
+多选筛选逻辑 / Multi-select logic:
+- 同维度 OR，跨维度 AND
+- 未选任何选项的维度不过滤
+
+前端改动 / Frontend:
+- Admin 桌面：select 下拉改为胶囊多选组
+- Admin 手机 Sheet：胶囊从单选改为多选
+- View 端所有胶囊支持多选
+- 手机底部人员 Tab 支持多选
+- 所有端新增「重置」按钮，有激活项时显示红点
+
+后端改动 / Backend (server.js):
+- /api/clothes 支持逗号分隔多值参数
+- 过滤逻辑改为 OR 匹配（同维度）
+- 四季兼容逻辑保留
+
+交付 / Delivery:
+- 先列文件清单，确认后逐文件输出完整代码
+```
+
+### 第三轮迭代文件清单 / File List
+
+| 文件 / File | 改动 / Changes |
+|---|---|
+| `server.js` | parseMultiParam() + OR 过滤逻辑 |
+| `public/admin/admin.js` | 多选状态数组 + 胶囊渲染 + 重置 |
+| `public/admin/index.html` | 筛选区 HTML 从 select 改为胶囊组 |
+| `public/view/view.js` | 多选数组 + 人员 Tab 多选 + 重置 |
+| `public/view/index.html` | 筛选栏结构调整 + 重置按钮位置 |
+
+---
+
+## 九、关键代码片段 / Key Code Snippets
+
+### 前端图片压缩 / Frontend Image Compression
+
+```javascript
+// utils.js
 U.compressImage = function(file, maxEdge, quality) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -300,58 +368,166 @@ U.compressImage = function(file, maxEdge, quality) {
     img.src = url;
   });
 };
-server.js — 双字段接收
-javascript
-// destination 根据 fieldname 判断存储目录
-destination: (req, file, cb) => {
-  const dir = file.fieldname === 'thumb'
-    ? path.join(uploadDir, 'thumbs')
-    : uploadDir;
-  fs.mkdirSync(dir, { recursive: true });
-  cb(null, dir);
-}
-季节筛选 — 四季兼容逻辑
-javascript
-// server.js 过滤
-if (req.query.season) {
-  const s = req.query.season;
+
+U.prepareImages = async function(file) {
+  const [display, thumb] = await Promise.all([
+    U.compressImage(file, 1200, 0.85),
+    U.compressImage(file, 400, 0.80)
+  ]);
+  return { display, thumb };
+};
+```
+
+### 后端双字段接收 / Backend Dual Field Receive
+
+```javascript
+// server.js - multer storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = file.fieldname === 'thumb'
+      ? path.join(uploadDir, 'thumbs')
+      : uploadDir;
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    if (!req._fileBasename) {
+      req._fileBasename = Date.now() + '-' + Math.random().toString(36).slice(2);
+    }
+    cb(null, req._fileBasename + '.jpg');
+  }
+});
+
+const upload = multer({ storage });
+app.post('/api/clothes', upload.fields([{name:'photo'},{name:'thumb'}]), ...);
+```
+
+### 季节筛选四季兼容 / Season Filter All-Seasons Compatibility
+
+```javascript
+// server.js
+if (seasons.length) {
   list = list.filter(c =>
-    c.seasons && (c.seasons.includes(s) || c.seasons.includes('四季'))
+    c.seasons && (
+      c.seasons.includes('四季') ||
+      c.seasons.some(s => seasons.includes(s))
+    )
   );
 }
-十一、部署说明
-群晖 Docker 部署
-群晖套件中心安装 Docker
+```
 
-上传项目文件到 NAS 指定目录
+### 多选筛选参数构建 / Multi-select Filter Params
 
-docker-compose.yml 配置 volume 映射整个项目目录：
+```javascript
+// admin.js / view.js
+function buildFilterParams() {
+  const params = new URLSearchParams();
+  if (filterMembers.length)  params.set('member',  filterMembers.join(','));
+  if (filterTypes.length)    params.set('type',    filterTypes.join(','));
+  if (filterSeasons.length)  params.set('season',  filterSeasons.join(','));
+  if (filterStatuses.length) params.set('status',  filterStatuses.join(','));
+  if (filterFav)             params.set('favorite','true');
+  return params;
+}
+```
 
-text
-volumes:
-  - /your/nas/path/wardrobe:/app
-  - /your/nas/path/wardrobe/data:/app/data
-  - /your/nas/path/wardrobe/photos:/app/photos
-启动容器：docker-compose up -d
+### 季节标签显示修复 / Season Label Fix
 
-文件更新流程
-修改宿主机文件
+```javascript
+// 修复前 / Before
+label: s + '季'  // 「四季」→「四季季」
 
-重启容器：docker-compose restart
+// 修复后 / After
+label: s.endsWith('季') ? s : s + '季'
+```
 
-刷新浏览器（注意清除缓存）
+---
 
-数据备份
-bash
+## 十、部署说明 / Deployment Notes
+
+### 群晖 Docker 部署 / Synology Docker Setup
+
+```yaml
+# docker-compose.yml
+version: '3'
+services:
+  wardrobe:
+    image: node:18-alpine
+    working_dir: /app
+    command: node server.js
+    ports:
+      - "3000:3000"
+    volumes:
+      - /your/nas/path/wardrobe:/app        # 项目文件
+      - /your/nas/path/wardrobe/data:/app/data    # JSON 数据
+      - /your/nas/path/wardrobe/photos:/app/photos # 图片
+    restart: unless-stopped
+```
+
+### 文件更新流程 / File Update Flow
+
+1. 修改宿主机文件 / Modify files on host
+2. 重启容器 / Restart container：`docker-compose restart`
+3. 清除浏览器缓存刷新 / Clear browser cache and refresh
+
+### 数据备份 / Data Backup
+
+```bash
 cp /your/nas/path/wardrobe/data/wardrobe.json \
    /your/nas/path/wardrobe/data/wardrobe.json.bak
-十二、待办 / 未来可迭代方向
- 批量为现有旧图片生成缩略图的一次性迁移脚本
+```
 
- 批量导入衣物功能
+---
 
- 季节标签筛选（按春/夏/秋/冬/四季）
+## 十一、与 AI 协作方法论 / AI Collaboration Methodology
 
- 衣物统计图表（按类型/人员/季节）
+**中文总结：**
 
- 导出功能（CSV / PDF）
+1. **分轮对话**：第一轮出架构，第二轮出代码，避免一次要太多
+2. **约束先行**：把「不能做什么」写在提示词最前面（不引入新依赖、不破坏现有数据）
+3. **文件清单确认**：让 AI 先列出要改哪些文件，确认后再要代码
+4. **逐文件替换**：每替换一个文件就测试，出问题容易定位
+5. **备份数据**：每次迭代前先备份 `wardrobe.json`
+6. **截断续写**：输出被截断直接说「继续」
+7. **问题拆解**：遇到 Bug 先描述现象，让 AI 定位原因再修复
+8. **技术决策咨询**：不确定的技术方案（如 sharp vs canvas）先问 AI 利弊再决定
+
+**English Summary:**
+
+1. **Multi-round dialogue**: Architecture first, code second
+2. **Lead with constraints**: State "what NOT to do" at the top of every prompt
+3. **File list confirmation**: Ask AI to list files before writing any code
+4. **Replace one file at a time**: Test after each replacement for easier debugging
+5. **Backup data**: Always backup `wardrobe.json` before each iteration
+6. **Handle truncation**: Just say "continue" when output gets cut off
+7. **Bug isolation**: Describe the symptom first, let AI locate the cause before fixing
+8. **Technical consultation**: Ask AI to explain trade-offs before making decisions
+
+---
+
+## 十二、已完成功能 / Completed Features
+
+- ✅ 衣物录入（拍照/上传 + 手动选类型 + AI 辅助）/ Clothing entry
+- ✅ 双界面（Admin 管理端 + View 只读端）/ Dual interface
+- ✅ 三档响应式（桌面/平板/手机）/ 3-tier responsive design
+- ✅ 多维度多选筛选（人员/类型/季节/状态/收藏）/ Multi-select filtering
+- ✅ 收藏属性 / Favorite feature
+- ✅ 统计页面点击跳转衣物列表 / Stats click-through
+- ✅ 登录态持久化 / Login persistence
+- ✅ 图片前端压缩 + 缩略图 / Image compression + thumbnails
+- ✅ 列表排序（桌面列头 + 手机胶囊）/ List sorting
+- ✅ Admin ↔ View 互跳入口 / Cross-navigation
+- ✅ 已淘汰衣物 View 端默认隐藏 / Retired items hidden by default in View
+
+## 十三、待迭代 / Future Iterations
+
+- [ ] 旧图片批量生成缩略图迁移脚本 / Batch thumbnail migration for existing photos
+- [ ] 筛选胶囊添加图标 / Add icons to filter pills
+- [ ] 衣物类目图标优化 / Clothing type icon refinement
+- [ ] 批量导入 / Bulk import
+- [ ] 导出功能（CSV/PDF）/ Export (CSV/PDF)
+
+---
+
+*本项目完全通过 AI 对话完成，从需求分析到多轮迭代上线，前后约 1 天。*
+*This project was completed entirely through AI conversation, from requirements to multi-iteration deployment, in approximately one day.*
