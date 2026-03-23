@@ -38,27 +38,20 @@ function writeJSON(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
 }
 
-// ─── 多值参数解析工具 ─────────────────────────────────────────────
-// 支持逗号分隔：?member=大儿子,小儿子 → ['大儿子', '小儿子']
-// 支持重复键：?member=大儿子&member=小儿子 → ['大儿子', '小儿子']
-// 空字符串过滤，返回空数组表示"不过滤此维度"
+// ─── 多值参数解析（逗号分隔 或 重复键）──────────────────────────
 function parseMultiParam(query, key) {
   const raw = query[key];
   if (!raw) return [];
   const arr = Array.isArray(raw) ? raw : [raw];
-  return arr
-    .flatMap(v => v.split(','))
-    .map(v => v.trim())
-    .filter(Boolean);
+  return arr.flatMap(v => v.split(',')).map(v => v.trim()).filter(Boolean);
 }
 
 // ─── 季节匹配（四季 = 全季）──────────────────────────────────────
-// seasons: 衣物的季节数组；querySeasons: 筛选选中的季节数组
 function matchSeasons(itemSeasons, querySeasons) {
   if (!querySeasons || querySeasons.length === 0) return true;
   if (!itemSeasons  || itemSeasons.length  === 0) return false;
-  if (itemSeasons.includes('四季')) return true;       // 四季衣物全命中
-  return querySeasons.some(s => itemSeasons.includes(s)); // OR 匹配
+  if (itemSeasons.includes('四季')) return true;
+  return querySeasons.some(s => itemSeasons.includes(s));
 }
 
 // ─── Multer：photo + thumb 双字段 ────────────────────────────────
@@ -193,7 +186,8 @@ app.delete('/api/members/:id', requireAdmin, (req, res) => {
 // ─── 衣物 API ─────────────────────────────────────────────────────
 
 // GET /api/clothes
-// 多值参数支持逗号分隔或重复键，同维度 OR，跨维度 AND
+// 多值参数：逗号分隔，同维度 OR，跨维度 AND
+// ?q= 搜索覆盖：name / clothingType / member / size / color / brand / status / notes
 app.get('/api/clothes', (req, res) => {
   let list = readJSON(WARDROBE_FILE);
 
@@ -203,24 +197,26 @@ app.get('/api/clothes', (req, res) => {
   const statuses = parseMultiParam(req.query, 'status');
   const { favorite, q } = req.query;
 
-  // 同维度 OR 过滤
   if (members.length)  list = list.filter(c => members.includes(c.member));
   if (types.length)    list = list.filter(c => types.includes(c.clothingType));
   if (statuses.length) list = list.filter(c => statuses.includes(c.status));
-
-  // 季节：四季衣物全命中，否则 OR 匹配
   if (seasons.length)  list = list.filter(c => matchSeasons(c.seasons, seasons));
-
-  // 收藏（单值）
   if (favorite === 'true') list = list.filter(c => c.favorite === true);
 
-  // 文本搜索
-  if (q) list = list.filter(c =>
-    (c.name  && c.name.includes(q))  ||
-    (c.brand && c.brand.includes(q)) ||
-    (c.color && c.color.includes(q)) ||
-    (c.notes && c.notes.includes(q))
-  );
+  // 扩展搜索范围：覆盖所有文本字段
+  if (q) {
+    const kw = q.toLowerCase();
+    list = list.filter(c =>
+      (c.name         && c.name.toLowerCase().includes(kw))         ||
+      (c.clothingType && c.clothingType.toLowerCase().includes(kw)) ||
+      (c.member       && c.member.toLowerCase().includes(kw))       ||
+      (c.size         && c.size.toLowerCase().includes(kw))         ||
+      (c.color        && c.color.toLowerCase().includes(kw))        ||
+      (c.brand        && c.brand.toLowerCase().includes(kw))        ||
+      (c.status       && c.status.toLowerCase().includes(kw))       ||
+      (c.notes        && c.notes.toLowerCase().includes(kw))
+    );
+  }
 
   list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   res.json(list);
