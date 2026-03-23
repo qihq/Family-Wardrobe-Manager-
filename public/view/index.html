@@ -6,142 +6,241 @@
   <title>家庭衣橱</title>
   <link rel="stylesheet" href="/public/shared/style.css">
   <style>
-    .view-page { min-height: 100vh; }
+    /* ── 页面基础 ── */
+    .view-page {
+      min-height: 100vh;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
 
-    /* 筛选区 */
-    .view-filter-bar {
-      background: var(--bg-card);
+    /* ── Header：sticky top:0，高度 60px ── */
+    .view-header {
+      position: sticky; top: 0; z-index: 100;
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
       border-bottom: 1px solid var(--border);
-      padding: 0 20px;
-      position: sticky;
-      top: var(--navbar-h);
-      z-index: 90;
+    }
+    .view-header-left {
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .view-header-title {
+      font-size: 1.1rem; font-weight: 800; color: var(--primary); white-space: nowrap;
+    }
+    .view-header-right {
+      display: flex; align-items: center; gap: 8px;
+    }
+    /* 桌面：人员 Tab 嵌入 Header 居中 */
+    .view-member-tabs-top {
+      display: none;
+      gap: 6px; overflow-x: auto; scrollbar-width: none;
+      flex: 1; justify-content: center; padding: 0 12px;
+    }
+    .view-member-tabs-top::-webkit-scrollbar { display: none; }
+
+    /* ── Filter Bar：紧贴 Header 下方，sticky top:60px ── */
+    .view-filter-bar {
+      position: sticky; top: 60px; z-index: 90;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      border-bottom: 1px solid var(--border);
     }
     .view-filter-row {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      padding: 10px 0;
-      align-items: center;
+      display: flex; gap: 8px; align-items: center;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; padding: 9px 16px;
     }
     .view-filter-row::-webkit-scrollbar { display: none; }
 
     /* 重置胶囊 */
     .filter-pill-reset {
-      padding: 7px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-full);
-      background: var(--bg-card);
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: var(--text-hint);
-      white-space: nowrap;
-      flex-shrink: 0;
-      cursor: pointer;
-      transition: all var(--transition);
-      min-height: 36px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      padding: 6px 12px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-full); background: #fff;
+      font-size: 0.8rem; font-weight: 700; color: var(--text-hint);
+      white-space: nowrap; flex-shrink: 0; cursor: pointer;
+      transition: all var(--transition); min-height: 34px;
+      display: inline-flex; align-items: center; gap: 4px;
     }
-    .filter-pill-reset:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-light); }
-    .filter-pill-reset.has-active { border-color: var(--danger); color: var(--danger); background: var(--danger-light); }
-    .filter-pill-reset-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); display: none; }
+    .filter-pill-reset.has-active {
+      border-color: var(--danger); color: var(--danger); background: var(--danger-light);
+    }
+    .filter-pill-reset-dot {
+      width: 5px; height: 5px; border-radius: 50%; background: var(--danger); display: none;
+    }
     .filter-pill-reset.has-active .filter-pill-reset-dot { display: inline-block; }
 
     /* 分隔线 */
     .filter-divider {
-      width: 1px; height: 20px; background: var(--border); flex-shrink: 0; margin: 0 4px;
+      width: 1px; height: 18px; background: var(--border); flex-shrink: 0; margin: 0 2px;
     }
 
-    /* 结果区 */
-    .view-results-section { padding: 16px 20px 32px; max-width: 1200px; margin: 0 auto; }
-    .result-count { font-size: 0.82rem; color: var(--text-hint); margin-bottom: 12px; padding: 0 2px; }
+    /* ── 手机筛选触发行（桌面隐藏）── */
+    .view-mobile-filter-bar {
+      display: none;
+      padding: 8px 12px;
+      background: var(--bg-page);
+      border-bottom: 1px solid var(--border);
+    }
+    .view-mobile-filter-row {
+      display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; align-items: center;
+    }
+    .view-mobile-filter-row::-webkit-scrollbar { display: none; }
 
-    /* 详情弹窗手机 bottom sheet */
+    /* ── 内容区 ── */
+    .view-results-section { padding: 0; }
+    .result-count { font-size: 0.82rem; color: var(--text-hint); padding: 8px 16px 4px; }
+
+    /* ── 统计面板 ── */
+    .view-stats-panel { display: none; padding: 16px; }
+    .view-stats-panel.open { display: block; }
+    .view-stats-title { font-size: 1rem; font-weight: 800; margin-bottom: 16px; color: var(--text-primary); }
+    .view-stat-detail-panel { margin-top: 20px; display: none; }
+    .view-stat-detail-panel.open { display: block; }
+    .view-stat-detail-title {
+      font-size: 1rem; font-weight: 800; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .view-stat-detail-close {
+      margin-left: auto; background: none; font-size: 1.1rem;
+      cursor: pointer; color: var(--text-hint); padding: 4px 8px; border-radius: 6px;
+    }
+    .view-stat-detail-close:hover { color: var(--danger); }
+
+    /* ── 手机端覆盖 ── */
     @media (max-width: 767px) {
-      .view-filter-bar { padding: 0 12px; }
-      .view-results-section { padding: 10px 12px 140px; }
-      #detail-modal-overlay { align-items: flex-end !important; padding: 0 !important; }
-      #detail-modal-overlay .modal {
-        border-radius: 20px 20px 0 0 !important;
-        max-width: 100% !important;
-        max-height: 88vh;
-        transform: translateY(100%) !important;
-      }
-      #detail-modal-overlay.open .modal { transform: translateY(0) !important; }
+      .view-filter-bar { display: none; }          /* 桌面筛选条隐藏 */
+      .view-mobile-filter-bar { display: block; }  /* 手机筛选按钮显示 */
+      .view-member-tabs-top { display: none !important; }
+      .view-stats-panel { padding: 12px 12px 80px; }
+      .view-clothes-grid { padding: 12px 12px 80px !important; }
+    }
+
+    /* ── 平板端 ── */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .view-filter-bar { display: block; }
+      .view-mobile-filter-bar { display: none; }
+      .view-member-tabs-top { display: flex; }
+    }
+
+    /* ── 桌面端 ── */
+    @media (min-width: 1024px) {
+      .view-filter-bar { display: block; }
+      .view-mobile-filter-bar { display: none; }
+      .view-member-tabs-top { display: flex; }
+      .view-results-section { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+      .view-stats-panel { max-width: 1400px; margin: 0 auto; padding: 24px; }
     }
   </style>
 </head>
 <body class="view-page">
 
-  <!-- 顶部导航 -->
-  <nav class="navbar">
-    <div class="navbar-inner">
-      <div class="navbar-brand">👕 家庭衣橱</div>
-      <!-- 桌面/平板：人员多选 Tab 在导航栏内 -->
-      <div id="member-tabs-top"
-        style="display:flex;gap:6px;flex:1;justify-content:center;
-               overflow-x:auto;scrollbar-width:none;padding:0 12px">
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <a href="/admin" class="btn btn-ghost btn-sm" style="font-size:0.82rem">管理入口 →</a>
-      </div>
+  <!-- ══════════════════════════════════════════════════════════
+       Header：sticky top:0，60px
+       手机：品牌名 + 管理入口
+       桌面/平板：品牌名 + 人员Tab（居中）+ 管理入口
+       ══════════════════════════════════════════════════════════ -->
+  <header class="view-header">
+    <div class="view-header-left">
+      <span class="view-header-title">👕 家庭衣橱</span>
     </div>
-  </nav>
 
-  <!-- 筛选条（桌面/平板）：类型 | 季节 | 状态 | ⭐收藏 | 重置 -->
+    <!-- 桌面/平板：人员 Tab 居中，JS 渲染 -->
+    <div id="member-tabs-top" class="view-member-tabs-top"></div>
+
+    <div class="view-header-right">
+      <a href="/admin" class="btn btn-ghost btn-sm" style="font-size:0.82rem">管理入口 →</a>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════
+       桌面/平板 Filter Bar：sticky top:60px
+       第一行：重置 | 类型胶囊（JS渲染）| 分隔 | 搜索框
+       第二行：季节胶囊（JS渲染）| 分隔 | 状态胶囊（JS渲染）| 分隔 | ⭐收藏
+       ══════════════════════════════════════════════════════════ -->
   <div class="view-filter-bar">
-
-    <!-- 第一行：类型 + 季节 -->
+    <!-- 行一：类型 + 搜索 -->
     <div class="view-filter-row" id="type-filter-row">
-      <!-- 重置按钮（最左）-->
       <button class="filter-pill-reset" id="view-reset-btn-top">
         <span class="filter-pill-reset-dot"></span>重置
       </button>
       <div class="filter-divider"></div>
-      <!-- 类型胶囊（JS 渲染）-->
+      <!-- JS 在此插入类型胶囊 -->
+      <div class="filter-divider" id="type-search-divider" style="margin-left:auto"></div>
+      <input type="text" class="view-search-input" id="view-search-desktop"
+        placeholder="🔍 搜索名称、品牌…" style="flex-shrink:0">
     </div>
-
-    <!-- 第二行：季节 + 状态 + 收藏 -->
+    <!-- 行二：季节 + 状态 + 收藏 -->
     <div class="view-filter-row" id="season-status-row" style="padding-top:0;padding-bottom:10px">
-      <!-- 季节胶囊（JS 渲染）-->
+      <!-- JS 在此插入季节胶囊 -->
       <div class="filter-divider" id="season-status-divider"></div>
-      <!-- 状态胶囊（JS 渲染）-->
+      <!-- JS 在此插入状态胶囊 -->
       <div class="filter-divider" id="fav-divider"></div>
-      <!-- 收藏胶囊 -->
-      <button class="filter-pill" id="fav-pill-desktop" data-fav="false">⭐ 收藏</button>
+      <button class="filter-pill" id="fav-pill-desktop">⭐ 收藏</button>
     </div>
-
   </div>
 
-  <!-- 手机端筛选按钮行 -->
-  <div style="padding:10px 12px 0;display:none" id="mobile-filter-bar" class="filter-btn-mobile">
-    <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px">
-      <button class="btn btn-ghost btn-sm" id="open-filter-sheet-btn" style="flex-shrink:0">🔍 筛选</button>
+  <!-- ══════════════════════════════════════════════════════════
+       手机端：筛选触发行（仅手机显示）
+       ══════════════════════════════════════════════════════════ -->
+  <div class="view-mobile-filter-bar" id="mobile-filter-bar">
+    <div class="view-mobile-filter-row">
+      <button class="btn btn-ghost btn-sm" id="open-filter-sheet-btn" style="flex-shrink:0">
+        🔍 筛选
+      </button>
       <button class="filter-pill-reset" id="view-reset-btn-mobile" style="flex-shrink:0">
         <span class="filter-pill-reset-dot"></span>重置
       </button>
-      <div id="active-filter-tags" style="display:flex;gap:6px;align-items:center;flex-shrink:0"></div>
+      <div id="active-filter-tags"
+        style="display:flex;gap:6px;align-items:center;flex-shrink:0;overflow-x:auto;scrollbar-width:none">
+      </div>
     </div>
   </div>
 
-  <!-- 内容区 -->
+  <!-- ══════════════════════════════════════════════════════════
+       衣物网格（手机 2 列 / 平板 3 列 / 桌面 auto-fill）
+       ══════════════════════════════════════════════════════════ -->
   <div class="view-results-section" id="results-section">
     <div class="result-count" id="result-count"></div>
     <div id="clothes-grid-wrap">
-      <div class="loading-overlay"><div class="spinner"></div>加载中…</div>
+      <div class="view-clothes-grid">
+        <div class="loading-overlay" style="grid-column:1/-1">
+          <div class="spinner"></div>加载中…
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- 手机底部人员多选 Tab -->
+  <!-- ══════════════════════════════════════════════════════════
+       统计面板（点击统计 Tab 显示）
+       ══════════════════════════════════════════════════════════ -->
+  <div class="view-stats-panel" id="view-stats-panel">
+    <div class="view-stats-title">📊 衣物统计概览</div>
+    <div class="stat-grid" id="view-stat-grid">
+      <div class="loading-overlay"><div class="spinner"></div></div>
+    </div>
+    <div class="view-stat-detail-panel" id="view-stat-detail-panel">
+      <div class="view-stat-detail-title">
+        <span id="view-stat-detail-title-text"></span>
+        <button class="view-stat-detail-close" id="view-stat-detail-close">✕</button>
+      </div>
+      <div class="view-clothes-grid" id="view-stat-detail-grid"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       手机底部人员 Tab + 统计 Tab
+       fixed，72px + safe-area-inset-bottom
+       ══════════════════════════════════════════════════════════ -->
   <div class="view-bottom-nav">
     <div class="view-bottom-nav-inner" id="member-tab-bar"></div>
   </div>
 
-  <!-- 详情弹窗 -->
+  <!-- ══════════════════════════════════════════════════════════
+       详情弹窗
+       ══════════════════════════════════════════════════════════ -->
   <div class="modal-overlay" id="detail-modal-overlay">
     <div class="modal" id="detail-modal">
       <div class="modal-handle"></div>
@@ -159,7 +258,9 @@
     </div>
   </div>
 
-  <!-- 手机筛选 Bottom Sheet（多选版） -->
+  <!-- ══════════════════════════════════════════════════════════
+       手机筛选 Bottom Sheet
+       ══════════════════════════════════════════════════════════ -->
   <div class="bottom-sheet-overlay" id="filter-sheet-overlay"></div>
   <div class="bottom-sheet" id="filter-sheet">
     <div class="bottom-sheet-handle"></div>
@@ -168,27 +269,26 @@
       <button class="btn-icon" id="close-filter-sheet-btn">✕</button>
     </div>
     <div class="bottom-sheet-body">
-      <!-- 人员 -->
+      <div class="filter-sheet-row" style="padding-bottom:12px">
+        <input type="text" class="search-input" id="view-search-mobile"
+          placeholder="🔍 搜索名称、品牌、颜色…" style="width:100%">
+      </div>
       <div class="filter-sheet-row">
         <div class="filter-sheet-label">适用人员</div>
         <div class="filter-sheet-pills" id="sheet-member-pills"></div>
       </div>
-      <!-- 类型 -->
       <div class="filter-sheet-row">
         <div class="filter-sheet-label">衣物类型</div>
         <div class="filter-sheet-pills" id="sheet-type-pills"></div>
       </div>
-      <!-- 季节 -->
       <div class="filter-sheet-row">
         <div class="filter-sheet-label">适穿季节</div>
         <div class="filter-sheet-pills" id="sheet-season-pills"></div>
       </div>
-      <!-- 状态 -->
       <div class="filter-sheet-row">
         <div class="filter-sheet-label">状态</div>
         <div class="filter-sheet-pills" id="sheet-status-pills"></div>
       </div>
-      <!-- 收藏 -->
       <div class="filter-sheet-row">
         <div class="filter-sheet-label">收藏</div>
         <div class="filter-sheet-pills">

@@ -242,6 +242,7 @@ function showStatDetail(card) {
     return;
   }
 
+  detailGrid.className = 'view-clothes-grid';
   detailGrid.innerHTML = list.map(item => U.renderClothesCard(item, true)).join('');
   detailGrid.querySelectorAll('.clothes-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -508,7 +509,7 @@ function renderGrid(list) {
     return;
   }
   const grid = document.createElement('div');
-  grid.className = 'clothes-grid';
+  grid.className = 'view-clothes-grid';
   grid.innerHTML = list.map(item => U.renderClothesCard(item, true)).join('');
   wrap.innerHTML = '';
   wrap.appendChild(grid);
