@@ -1722,4 +1722,12 @@ feat: 多维度多选筛选 + 筛选胶囊图标
 
 ---
 
+## 今日更新总结 / Today's Summary
+ 
+| 功能 / Feature | 说明 / Description |
+|---|---|
+| View 端统计 Tab | 📊 全量数据统计，点击展开衣物列表，只读无编辑 |
+| View 端搜索框 | 桌面本地过滤，手机走后端，防抖 350ms |
+| server.js 搜索扩展 | `?q=` 覆盖全部文本字段，加 toLowerCase() |
+| server.js volume 挂载 | 后端更新无需重建镜像，替换文件 + 重启容器即可 |
 
