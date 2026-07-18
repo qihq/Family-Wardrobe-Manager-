@@ -29,10 +29,15 @@
     <button class="btn btn-primary btn-lg" id="login-btn" style="width:100%;justify-content:center">
       登录
     </button>
+    <button class="btn btn-ghost" type="button" data-switch-ui="island" style="width:100%;justify-content:center">
+      体验新 UI
+    </button>
   </div>
 </div>
 
 <div id="toast-container"></div>
+<script src="/public/shared/ui-preference.js"></script>
+<script>document.querySelector('[data-switch-ui="island"]').addEventListener('click', () => WardrobeUiPreference.switchTo('island'));</script>
 <script src="/public/shared/utils.js"></script>
 <script>
   const U = window.WardrobeUtils;
@@ -48,7 +53,7 @@
     try {
       await U.apiFetch('/api/login', { method: 'POST', body: JSON.stringify({ password: pwd }) });
       localStorage.setItem(LS_KEY, '1');
-      window.location.href = '/admin';
+      window.location.href = '/classic/admin';
     } catch {
       err.style.display = 'block';
       btn.disabled = false; btn.textContent = '登录';

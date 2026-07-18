@@ -100,7 +100,8 @@
     <div class="drawer-nav-item" data-panel="panel-stats"><span class="nav-icon">📊</span> 统计概览</div>
   </nav>
   <div class="drawer-footer" style="display:flex;flex-direction:column;gap:8px">
-    <a href="/view" target="_blank" class="btn btn-ghost btn-sm" style="width:100%">进入只读端 ↗</a>
+    <button type="button" class="btn btn-primary btn-sm" data-switch-ui="island" style="width:100%">体验新 UI</button>
+    <a href="/classic/view" target="_blank" class="btn btn-ghost btn-sm" style="width:100%">进入只读端 ↗</a>
     <button class="btn btn-outline btn-sm" style="width:100%" id="drawer-logout-btn">退出登录</button>
   </div>
 </div>
@@ -132,7 +133,7 @@
     </nav>
     <!-- 底部：margin-top:auto 推到最底部 -->
     <div class="sidenav-footer" style="display:flex;flex-direction:column;gap:8px">
-      <a href="/view" target="_blank" class="btn btn-ghost btn-sm" style="width:100%">进入只读端 ↗</a>
+      <a href="/classic/view" target="_blank" class="btn btn-ghost btn-sm" style="width:100%">进入只读端 ↗</a>
       <button class="btn btn-outline btn-sm" style="width:100%" id="sidenav-logout-btn">退出登录</button>
     </div>
   </aside>
@@ -148,7 +149,7 @@
         <span class="breadcrumb-current" id="breadcrumb-current">衣物管理</span>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <a href="/view" target="_blank" class="btn btn-ghost btn-sm">进入只读端 ↗</a>
+        <a href="/classic/view" target="_blank" class="btn btn-ghost btn-sm">进入只读端 ↗</a>
         <button class="btn btn-outline btn-sm" id="topbar-logout-btn">退出</button>
       </div>
     </div>
@@ -590,6 +591,8 @@
 </div>
 
 <div id="toast-container"></div>
+<script src="/public/shared/ui-preference.js"></script>
+<script>document.querySelector('[data-switch-ui="island"]').addEventListener('click', () => WardrobeUiPreference.switchTo('island'));</script>
 <script src="/public/shared/utils.js"></script>
 <script src="/public/admin/admin.js"></script>
 

@@ -151,7 +151,8 @@
     <div id="member-tabs-top" class="view-member-tabs-top"></div>
 
     <div class="view-header-right">
-      <a href="/admin" class="btn btn-ghost btn-sm" style="font-size:0.82rem">管理入口 →</a>
+      <button type="button" class="btn btn-ghost btn-sm" data-switch-ui="island">体验新 UI</button>
+      <a href="/classic/admin" class="btn btn-ghost btn-sm" style="font-size:0.82rem">管理入口 →</a>
     </div>
   </header>
 
@@ -303,6 +304,8 @@
   </div>
 
   <div id="toast-container"></div>
+  <script src="/public/shared/ui-preference.js"></script>
+  <script>document.querySelector('[data-switch-ui="island"]').addEventListener('click', () => WardrobeUiPreference.switchTo('island'));</script>
   <script src="/public/shared/utils.js"></script>
   <script src="/public/view/view.js"></script>
 </body>

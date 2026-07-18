@@ -14,7 +14,10 @@ test('canonical routes serve island UI and classic routes keep authorization', a
 
   let response = await fx.request('/classic/view');
   assert.equal(response.status, 200);
-  assert.match(await response.text(), /data-ui="classic"/);
+  let html = await response.text();
+  assert.match(html, /data-ui="classic"/);
+  assert.match(html, /\/public\/shared\/ui-preference\.js/);
+  assert.match(html, /data-switch-ui="island"/);
 
   response = await fx.request('/classic/admin', { redirect: 'manual' });
   assert.equal(response.status, 302);
@@ -23,5 +26,11 @@ test('canonical routes serve island UI and classic routes keep authorization', a
   await fx.request('/api/login', { method: 'POST', json: { password: 'test-password' } });
   response = await fx.request('/classic/admin');
   assert.equal(response.status, 200);
-  assert.match(await response.text(), /data-ui="classic"/);
+  html = await response.text();
+  assert.match(html, /data-ui="classic"/);
+  assert.match(html, /data-switch-ui="island"/);
+
+  response = await fx.request('/classic/admin/login');
+  html = await response.text();
+  assert.match(html, /data-switch-ui="island"/);
 });

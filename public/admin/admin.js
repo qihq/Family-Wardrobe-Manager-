@@ -8,14 +8,14 @@ const LS_KEY = 'wardrobe_admin_logged_in';
   if (localStorage.getItem(LS_KEY) === '1') {
     try {
       const d = await U.apiFetch('/api/auth/check');
-      if (!d.isAdmin) { localStorage.removeItem(LS_KEY); window.location.href = '/admin/login'; }
-    } catch { localStorage.removeItem(LS_KEY); window.location.href = '/admin/login'; }
+      if (!d.isAdmin) { localStorage.removeItem(LS_KEY); window.location.href = '/classic/admin/login'; }
+    } catch { localStorage.removeItem(LS_KEY); window.location.href = '/classic/admin/login'; }
   } else {
     try {
       const d = await U.apiFetch('/api/auth/check');
-      if (!d.isAdmin) window.location.href = '/admin/login';
+      if (!d.isAdmin) window.location.href = '/classic/admin/login';
       else localStorage.setItem(LS_KEY, '1');
-    } catch { window.location.href = '/admin/login'; }
+    } catch { window.location.href = '/classic/admin/login'; }
   }
 })();
 
@@ -946,7 +946,7 @@ async function showStatDetail(card) {
 async function doLogout() {
   localStorage.removeItem(LS_KEY);
   await U.apiFetch('/api/logout', { method: 'POST' }).catch(() => {});
-  window.location.href = '/admin/login';
+  window.location.href = '/classic/admin/login';
 }
 function initLogout() {
   ['sidenav-logout-btn','topbar-logout-btn','drawer-logout-btn'].forEach(id =>
