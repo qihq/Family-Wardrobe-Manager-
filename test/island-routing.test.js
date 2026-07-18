@@ -22,3 +22,12 @@ test('explicit island preference maps classic URL without a loop', async () => {
     null
   );
 });
+
+test('route state round trips unicode multi filters and guards admin sections', async () => {
+  const { parseRoute, serializeRoute, isAllowedSection } = await import('../public/island/js/router.mjs');
+  const route = parseRoute('?section=wardrobe&member=小明,小花&season=春&favorite=true&q=蓝色');
+  assert.deepEqual(route.filters.member, ['小明', '小花']);
+  assert.equal(parseRoute('?' + serializeRoute(route)).filters.q, '蓝色');
+  assert.equal(isAllowedSection('add', false), false);
+  assert.equal(isAllowedSection('add', true), true);
+});

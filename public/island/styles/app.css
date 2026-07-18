@@ -1,0 +1,29 @@
+body.overlay-open { overflow: hidden; }
+.app-shell { min-height: 100vh; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--island-text); font-size: 18px; font-weight: 900; text-decoration: none; }
+.brand img { width: 34px; height: 34px; object-fit: contain; }
+.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 20; width: 232px; display: flex; flex-direction: column; gap: 28px; padding: 26px 18px; background: var(--island-surface); border-right: 1px solid var(--island-border-light); }
+.nav-list { display: grid; gap: 8px; }
+.nav-button { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; border-radius: var(--island-radius); background: transparent; color: var(--island-text); cursor: pointer; font-weight: 700; text-align: left; }
+.nav-button img { width: 30px; height: 30px; object-fit: contain; }
+.nav-button[aria-current="page"] { background: var(--island-primary-soft); color: #276f67; box-shadow: var(--island-shadow-sm); }
+.account-actions { display: grid; gap: 10px; margin-top: auto; }
+#main-view { min-height: 100vh; margin-left: 232px; padding: 34px clamp(24px, 4vw, 64px); }
+.app-view { width: min(100%, 1440px); margin-inline: auto; }
+.tablet-header, .mobile-header, .mobile-nav { display: none; }
+.initial-loading { padding: 80px 24px; color: var(--island-muted); text-align: center; }
+.overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.35); }
+.overlay[hidden] { display: none; }
+.dialog { position: relative; width: min(100%, 460px); max-height: min(88vh, 760px); overflow: auto; padding: 34px; }
+.dialog-close { position: absolute; top: 14px; right: 14px; }
+.dialog-art { display: block; width: 76px; height: 76px; margin: 0 auto 12px; object-fit: contain; }
+.dialog h2, .dialog p { text-align: center; }
+.dialog form { display: grid; gap: 12px; margin-top: 24px; }
+.form-error { min-height: 22px; margin: 0; color: var(--island-danger); }
+.drawer-overlay { place-items: stretch end; padding: 0; }
+.drawer { width: min(420px, 100%); min-height: 100vh; padding: 32px 26px; border-radius: var(--island-radius-lg) 0 0 var(--island-radius-lg); }
+.detail-dialog { width: min(100%, 820px); }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+.toast-region { position: fixed; z-index: 200; right: 24px; bottom: 24px; display: grid; gap: 10px; }
+.toast { max-width: 360px; padding: 12px 18px; border-radius: var(--island-radius); background: var(--island-text); color: #fff; box-shadow: var(--island-shadow-lg); }
+.toast--error { background: var(--island-danger); }

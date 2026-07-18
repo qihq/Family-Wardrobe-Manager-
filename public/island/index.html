@@ -8,14 +8,71 @@
     import { UI_PREFERENCE_KEY, resolveUiTarget } from '/public/island/js/preference.mjs';
     const url = new URL(location.href);
     const explicit = url.searchParams.get('ui');
-    if (explicit === 'island' || explicit === 'classic') {
-      localStorage.setItem(UI_PREFERENCE_KEY, explicit);
-    }
+    if (explicit === 'island' || explicit === 'classic') localStorage.setItem(UI_PREFERENCE_KEY, explicit);
     const target = resolveUiTarget({ url, storedPreference: localStorage.getItem(UI_PREFERENCE_KEY) });
     if (target) location.replace(target);
   </script>
+  <link rel="stylesheet" href="/public/island/styles/tokens.css">
+  <link rel="stylesheet" href="/public/island/styles/base.css">
+  <link rel="stylesheet" href="/public/island/styles/app.css">
+  <link rel="stylesheet" href="/public/island/styles/responsive.css">
 </head>
 <body>
-  <main id="app" aria-busy="true"></main>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="主导航">
+      <a class="brand" href="/view"><img src="/public/island/assets/icons/icon-leaf.png" alt=""><span>家庭衣橱</span></a>
+      <nav id="sidebar-nav"></nav>
+      <div class="account-actions">
+        <button class="island-button account-login" type="button">管理登录</button>
+        <button class="island-button account-logout" type="button" hidden>退出登录</button>
+        <button class="island-button switch-classic" type="button">经典 UI</button>
+      </div>
+    </aside>
+
+    <header class="tablet-header">
+      <a class="brand" href="/view"><img src="/public/island/assets/icons/icon-leaf.png" alt=""><span>家庭衣橱</span></a>
+      <nav id="tablet-nav" aria-label="主导航"></nav>
+      <button class="island-icon-button account-login" type="button" aria-label="管理登录"><img src="/public/island/assets/icons/icon-design.svg" alt=""></button>
+    </header>
+
+    <header class="mobile-header">
+      <a class="brand" href="/view"><img src="/public/island/assets/icons/icon-leaf.png" alt=""><span id="mobile-title">衣橱</span></a>
+      <button class="island-icon-button account-login" type="button" aria-label="管理登录"><img src="/public/island/assets/icons/icon-design.svg" alt=""></button>
+    </header>
+
+    <main id="main-view" tabindex="-1">
+      <section id="wardrobe-view" class="app-view" data-section="wardrobe"><div class="initial-loading" role="status">正在整理衣橱…</div></section>
+      <section id="add-view" class="app-view" data-section="add" hidden></section>
+      <section id="members-view" class="app-view" data-section="members" hidden></section>
+      <section id="stats-view" class="app-view" data-section="stats" hidden></section>
+    </main>
+
+    <nav id="mobile-nav" class="mobile-nav" aria-label="主导航"></nav>
+  </div>
+
+  <div id="login-dialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="login-title" hidden tabindex="-1">
+    <div class="dialog island-panel">
+      <button class="island-icon-button dialog-close" type="button" aria-label="关闭">×</button>
+      <img class="dialog-art" src="/public/island/assets/icons/icon-design.svg" alt="">
+      <h2 id="login-title">管理登录</h2>
+      <p>登录后可以新增、编辑和整理衣物。</p>
+      <form id="login-form">
+        <label for="login-password">管理密码</label>
+        <input class="island-field" id="login-password" name="password" type="password" required autocomplete="current-password">
+        <p id="login-error" class="form-error" role="alert"></p>
+        <button class="island-button island-button--primary" type="submit">进入管理模式</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="filter-drawer" class="overlay drawer-overlay" role="dialog" aria-modal="true" aria-labelledby="filter-title" hidden tabindex="-1">
+    <aside class="drawer island-panel"><button class="island-icon-button dialog-close" type="button" aria-label="关闭">×</button><h2 id="filter-title">更多筛选</h2><div id="filter-content"></div></aside>
+  </div>
+  <div id="detail-dialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="detail-title" hidden tabindex="-1"><div class="dialog detail-dialog island-panel"><button class="island-icon-button dialog-close" type="button" aria-label="关闭">×</button><div id="detail-content"></div></div></div>
+  <div id="confirm-dialog" class="overlay" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" hidden tabindex="-1"><div class="dialog confirm-dialog island-panel"><h2 id="confirm-title">请确认</h2><p id="confirm-message"></p><div class="dialog-actions"><button class="island-button confirm-cancel" type="button">取消</button><button class="island-button island-button--primary confirm-accept" type="button">确认</button></div></div></div>
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+
+  <script src="/public/shared/utils.js"></script>
+  <script type="module" src="/public/island/js/app.mjs"></script>
 </body>
 </html>
