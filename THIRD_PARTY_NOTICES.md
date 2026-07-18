@@ -9,7 +9,7 @@
   (`CC BY-NC 4.0`)
 - Use: personal and non-commercial only.
 
-This project vendors selected fonts, interface icons, and divider artwork from
+This project vendors selected fonts, interface icons, divider artwork, and footer artwork from
 Animal Island UI. The files were modified only by reorganizing them into the
 Wardrobe Manager asset directories and integrating them into a new responsive
 layout. The complete vendored inventory is maintained by

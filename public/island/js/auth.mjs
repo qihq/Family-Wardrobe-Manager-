@@ -1,53 +1,46 @@
 import { ApiError } from './api.mjs';
 
-export function shouldOpenLoginForPath(pathname, isAdmin) {
-  return !isAdmin && (pathname === '/admin' || pathname === '/admin/login');
+export function safeNextPath(value) {
+  if (!value) return '/admin';
+  try {
+    const base = new URL('http://wardrobe.local');
+    if (typeof value !== 'string' || value.startsWith('//') || !value.startsWith('/')) return '/admin';
+    const target = new URL(value, base);
+    if (target.origin !== base.origin || !['/admin', '/view'].includes(target.pathname)) return '/admin';
+    return target.pathname + target.search + target.hash;
+  } catch {
+    return '/admin';
+  }
 }
 
-export function initAuth({ store, api, loginOverlay, navigate, notify }) {
-  const form = document.getElementById('login-form');
-  const loginError = document.getElementById('login-error');
+export function loginPath(next = '/admin') {
+  return `/login?next=${encodeURIComponent(safeNextPath(next))}`;
+}
 
+export function initAuth({ store, api, notify }) {
   async function check() {
     try {
       const result = await api.getAuth();
       store.setState(state => ({ ...state, auth: { status: 'ready', isAdmin: Boolean(result.isAdmin) } }));
-      if (shouldOpenLoginForPath(location.pathname, Boolean(result.isAdmin))) loginOverlay.open();
+      if (location.pathname === '/admin' && !result.isAdmin) location.replace(loginPath('/admin' + location.search));
     } catch (error) {
       store.setState(state => ({ ...state, auth: { status: 'ready', isAdmin: false } }));
       notify(error.message, 'error');
     }
   }
 
-  form.addEventListener('submit', async event => {
-    event.preventDefault();
-    const password = new FormData(form).get('password');
-    loginError.textContent = '';
-    try {
-      await api.login(password);
-      store.setState(state => ({ ...state, auth: { status: 'ready', isAdmin: true } }));
-      form.reset();
-      loginOverlay.close();
-      notify('已进入管理模式', 'success');
-    } catch (error) {
-      loginError.textContent = error.message;
-    }
-  });
-
   async function logout() {
     await api.logout().catch(() => {});
     store.setState(state => ({ ...state, auth: { status: 'ready', isAdmin: false } }));
-    navigate({ section: 'wardrobe' }, { replace: true });
-    notify('已退出管理模式', 'status');
+    location.assign('/view');
   }
 
   function handleUnauthorized(error) {
     if (!(error instanceof ApiError) || error.status !== 401) return false;
     store.setState(state => ({ ...state, auth: { status: 'ready', isAdmin: false } }));
-    navigate({ section: 'wardrobe' }, { replace: true });
-    loginOverlay.open();
+    location.assign(loginPath(location.pathname + location.search));
     return true;
   }
 
-  return { check, logout, handleUnauthorized, openLogin: trigger => loginOverlay.open(trigger) };
+  return { check, logout, handleUnauthorized, openLogin: () => location.assign(loginPath('/admin')) };
 }

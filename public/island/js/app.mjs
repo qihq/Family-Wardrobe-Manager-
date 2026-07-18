@@ -11,7 +11,7 @@ import { initStats } from './stats.mjs';
 import { toClassicPath } from './preference.mjs';
 
 const store = createStore({ ...initialState, route: parseRoute(location.search) });
-const overlays = Object.fromEntries(['login-dialog', 'filter-drawer', 'detail-dialog', 'confirm-dialog'].map(id => [id, createOverlay(document.getElementById(id))]));
+const overlays = Object.fromEntries(['filter-drawer', 'detail-dialog', 'confirm-dialog'].map(id => [id, createOverlay(document.getElementById(id))]));
 
 function notify(message, type = 'status') {
   const toast = document.createElement('div');
@@ -33,7 +33,7 @@ const navigate = createNavigator({
   }
 });
 
-const auth = initAuth({ store, api, loginOverlay: overlays['login-dialog'], navigate, notify });
+const auth = initAuth({ store, api, notify });
 async function reloadAll() {
   const members = await api.getMembers();
   store.setState(state => ({ ...state, members }));
@@ -84,17 +84,31 @@ function render(state) {
   let section = state.route.section;
   if (!isAllowedSection(section, state.auth.isAdmin)) section = 'wardrobe';
   document.querySelectorAll('.app-view').forEach(view => { view.hidden = view.dataset.section !== section; });
-  document.querySelectorAll('.account-login').forEach(button => { button.hidden = state.auth.isAdmin; });
-  document.querySelectorAll('.account-logout').forEach(button => { button.hidden = !state.auth.isAdmin; });
+  document.querySelectorAll('[data-auth-action]').forEach(button => {
+    button.dataset.authAction = state.auth.isAdmin ? 'logout' : 'login';
+    button.querySelector('span').textContent = state.auth.isAdmin ? '退出管理' : '管理登录';
+  });
   document.getElementById('mobile-title').textContent = getNavItems(true).find(item => item.section === section)?.label || '衣橱';
   renderNavigation({ ...state, route: { ...state.route, section } });
   document.getElementById('main-view').setAttribute('aria-busy', state.auth.status === 'checking' ? 'true' : 'false');
 }
 
 store.subscribe(render);
-document.querySelectorAll('.account-login').forEach(button => button.addEventListener('click', () => auth.openLogin(button)));
-document.querySelectorAll('.account-logout').forEach(button => button.addEventListener('click', auth.logout));
-document.querySelectorAll('.switch-classic').forEach(button => button.addEventListener('click', () => { localStorage.setItem('wardrobe_ui_v1', 'classic'); location.assign(toClassicPath(new URL(location.href))); }));
+document.querySelectorAll('[data-auth-action]').forEach(button => button.addEventListener('click', () => {
+  if (button.dataset.authAction === 'logout') auth.logout();
+  else auth.openLogin();
+}));
+document.querySelectorAll('[data-classic-link]').forEach(link => {
+  link.href = toClassicPath(new URL(location.href));
+  link.addEventListener('click', () => localStorage.setItem('wardrobe_ui_v1', 'classic'));
+});
+document.querySelectorAll('.system-menu').forEach(menu => menu.addEventListener('toggle', () => {
+  if (!menu.open) return;
+  document.querySelectorAll('.system-menu[open]').forEach(other => { if (other !== menu) other.open = false; });
+}));
+document.addEventListener('click', event => {
+  document.querySelectorAll('.system-menu[open]').forEach(menu => { if (!menu.contains(event.target)) menu.open = false; });
+});
 document.querySelectorAll('.dialog-close').forEach(button => button.addEventListener('click', () => overlays[button.closest('.overlay').id].close()));
 window.addEventListener('popstate', () => {
   store.setState(state => ({ ...state, route: parseRoute(location.search) }));

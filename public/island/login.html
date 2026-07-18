@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-ui="island" data-page="login">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#19c8b9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>管理登录 · 家庭衣橱</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/public/island/assets/icons/icon-shopping.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/public/island/assets/pwa/icon-shopping-192.png">
+  <link rel="stylesheet" href="/public/island/styles/tokens.css">
+  <link rel="stylesheet" href="/public/island/styles/base.css">
+  <link rel="stylesheet" href="/public/island/styles/login.css">
+</head>
+<body>
+  <main class="login-page">
+    <a class="login-brand" href="/view"><span class="login-brand__mark"><img src="/public/island/assets/icons/icon-shopping.svg" alt=""></span><span><strong>家庭衣橱</strong><small>Wardrobe Island</small></span></a>
+    <section class="login-panel island-panel" aria-labelledby="login-title">
+      <div class="login-art"><span class="login-art__halo"></span><img src="/public/island/assets/icons/icon-design.svg" alt=""></div>
+      <p class="login-kicker">管理入口</p>
+      <h1 id="login-title">欢迎回来</h1>
+      <p class="login-intro">进入管理模式，新增衣物、维护家庭成员并查看衣橱统计。</p>
+      <img class="login-divider" src="/public/island/assets/dividers/divider-line-teal.svg" alt="">
+      <form id="standalone-login-form" novalidate>
+        <label for="login-password">管理密码</label>
+        <div class="password-field"><input class="island-field" id="login-password" name="password" type="password" required autocomplete="current-password" enterkeyhint="go" placeholder="请输入管理密码"></div>
+        <p id="login-error" class="login-error" role="alert"></p>
+        <button class="island-button island-button--primary login-submit" type="submit">进入管理模式</button>
+      </form>
+      <a class="browse-link" href="/view">先浏览衣橱</a>
+    </section>
+    <img class="login-tree" src="/public/island/assets/footer/footer-tree.webp" alt="" aria-hidden="true">
+    <img class="login-sea" src="/public/island/assets/footer/footer-sea.svg" alt="" aria-hidden="true">
+  </main>
+  <script type="module" src="/public/island/js/pwa.mjs"></script>
+  <script type="module" src="/public/island/js/login.mjs"></script>
+</body>
+</html>

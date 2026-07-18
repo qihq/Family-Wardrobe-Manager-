@@ -9,9 +9,10 @@ const root = path.resolve(__dirname, '..');
 
 test('island shell exposes semantic responsive anchors', () => {
   const html = fs.readFileSync(path.join(root, 'public/island/index.html'), 'utf8');
-  for (const id of ['sidebar-nav', 'tablet-nav', 'mobile-nav', 'main-view', 'login-dialog', 'filter-drawer', 'detail-dialog', 'confirm-dialog', 'toast-region']) {
+  for (const id of ['sidebar-nav', 'tablet-nav', 'mobile-nav', 'main-view', 'filter-drawer', 'detail-dialog', 'confirm-dialog', 'toast-region']) {
     assert.match(html, new RegExp(`id="${id}"`), id);
   }
+  assert.doesNotMatch(html, /id="login-dialog"/);
   assert.equal((html.match(/<main\b/g) || []).length, 1);
   assert.match(html, /type="module" src="\/public\/island\/js\/app\.mjs"/);
   assert.doesNotMatch(html, /onclick=/);
@@ -27,15 +28,47 @@ test('hidden state always wins over component display styles', () => {
   assert.match(css, /\[hidden\]\s*\{\s*display:\s*none\s*!important/);
 });
 
-test('tablet and mobile headers expose classic switch and admin logout', () => {
+test('each responsive shell exposes one consolidated system menu', () => {
   const html = fs.readFileSync(path.join(root, 'public/island/index.html'), 'utf8');
-  for (const header of ['tablet-header', 'mobile-header']) {
-    const start = html.indexOf(`class="${header}"`);
-    const end = html.indexOf('</header>', start);
-    const markup = html.slice(start, end);
-    assert.match(markup, /switch-classic/);
-    assert.match(markup, /account-logout/);
+  assert.equal((html.match(/class="system-menu/g) || []).length, 3);
+  assert.doesNotMatch(html, /account-login|switch-classic/);
+  assert.match(html, /data-install-app/);
+  assert.match(html, /data-classic-link/);
+  assert.match(html, /data-auth-action/);
+});
+
+test('brand and PWA chrome use the Animal Island shopping icon, never the leaf', () => {
+  const files = [
+    'public/island/index.html',
+    'public/island/login.html',
+    'public/island/manifest.webmanifest'
+  ].map(file => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
+  assert.match(files, /icon-shopping/);
+  assert.doesNotMatch(files, /icon-leaf/);
+});
+
+test('standalone login has stable mobile sizing and no dialog shell', () => {
+  const html = fs.readFileSync(path.join(root, 'public/island/login.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'public/island/styles/login.css'), 'utf8');
+  assert.match(html, /data-page="login"/);
+  assert.match(html, /viewport-fit=cover/);
+  assert.match(html, /autocomplete="current-password"/);
+  assert.doesNotMatch(html, /role="dialog"|aria-modal/);
+  assert.match(css, /min-height:\s*100dvh/);
+  assert.match(css, /font-size:\s*16px/);
+  assert.match(css, /-webkit-text-size-adjust:\s*100%/);
+});
+
+test('wardrobe consolidates search and every filter family into one explorer', () => {
+  const source = fs.readFileSync(path.join(root, 'public/island/js/wardrobe.mjs'), 'utf8');
+  assert.match(source, /class="wardrobe-explorer island-panel"/);
+  assert.match(source, /id="wardrobe-search"/);
+  assert.match(source, /id="filter-count"/);
+  assert.match(source, /data-clear-filters/);
+  for (const name of ['member', 'type', 'season', 'status', 'favorite']) {
+    assert.match(source, new RegExp(`name="${name}"`), name);
   }
+  assert.doesNotMatch(source, /id="member-shortcuts"|id="type-shortcuts"/);
 });
 
 test('navigation inventory follows authorization', async () => {

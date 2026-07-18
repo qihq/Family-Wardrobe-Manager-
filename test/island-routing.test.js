@@ -40,10 +40,12 @@ test('route state round trips unicode multi filters and guards admin sections', 
   assert.equal(shouldResetScroll({ section: 'wardrobe' }, { section: 'wardrobe' }), false);
 });
 
-test('admin paths request management login for logged out visitors', async () => {
-  const { shouldOpenLoginForPath } = await import('../public/island/js/auth.mjs');
-  assert.equal(shouldOpenLoginForPath('/admin', false), true);
-  assert.equal(shouldOpenLoginForPath('/admin/login', false), true);
-  assert.equal(shouldOpenLoginForPath('/view', false), false);
-  assert.equal(shouldOpenLoginForPath('/admin', true), false);
+test('login return paths stay on the wardrobe origin', async () => {
+  const { loginPath, safeNextPath } = await import('../public/island/js/auth.mjs');
+  assert.equal(safeNextPath('/admin?section=members'), '/admin?section=members');
+  assert.equal(safeNextPath('/view?favorite=true'), '/view?favorite=true');
+  assert.equal(safeNextPath('https://evil.example/steal'), '/admin');
+  assert.equal(safeNextPath('//evil.example/steal'), '/admin');
+  assert.equal(safeNextPath('javascript:alert(1)'), '/admin');
+  assert.equal(loginPath('/admin?section=stats'), '/login?next=%2Fadmin%3Fsection%3Dstats');
 });

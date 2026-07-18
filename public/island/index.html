@@ -2,7 +2,10 @@
 <html lang="zh-CN" data-ui="island">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#19c8b9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>家庭衣橱</title>
   <script type="module">
     import { UI_PREFERENCE_KEY, resolveUiTarget } from '/public/island/js/preference.mjs';
@@ -12,6 +15,9 @@
     const target = resolveUiTarget({ url, storedPreference: localStorage.getItem(UI_PREFERENCE_KEY) });
     if (target) location.replace(target);
   </script>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/public/island/assets/icons/icon-shopping.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/public/island/assets/pwa/icon-shopping-192.png">
   <link rel="stylesheet" href="/public/island/styles/tokens.css">
   <link rel="stylesheet" href="/public/island/styles/base.css">
   <link rel="stylesheet" href="/public/island/styles/app.css">
@@ -20,24 +26,41 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar" aria-label="主导航">
-      <a class="brand" href="/view"><img src="/public/island/assets/icons/icon-leaf.png" alt=""><span>家庭衣橱</span></a>
+      <a class="brand" href="/view"><span class="brand-mark"><img src="/public/island/assets/icons/icon-shopping.svg" alt=""></span><span><strong>家庭衣橱</strong><small>Wardrobe Island</small></span></a>
       <nav id="sidebar-nav"></nav>
-      <div class="account-actions">
-        <button class="island-button account-login" type="button">管理登录</button>
-        <button class="island-button account-logout" type="button" hidden>退出登录</button>
-        <button class="island-button switch-classic" type="button">经典 UI</button>
-      </div>
+      <details class="system-menu">
+        <summary class="system-trigger"><img src="/public/island/assets/icons/icon-design.svg" alt=""><span>系统与账户</span><span class="menu-chevron" aria-hidden="true">⌄</span></summary>
+        <div class="system-popover">
+          <button class="system-action" type="button" data-auth-action><img src="/public/island/assets/icons/icon-design.svg" alt=""><span>管理登录</span></button>
+          <button class="system-action" type="button" data-install-app><img src="/public/island/assets/icons/icon-diy.svg" alt=""><span>安装应用</span></button>
+          <a class="system-action" href="/classic/view" data-classic-link><img src="/public/island/assets/icons/icon-variant.svg" alt=""><span>经典界面</span></a>
+        </div>
+      </details>
     </aside>
 
     <header class="tablet-header">
-      <a class="brand" href="/view"><img src="/public/island/assets/icons/icon-leaf.png" alt=""><span>家庭衣橱</span></a>
+      <a class="brand" href="/view"><span class="brand-mark"><img src="/public/island/assets/icons/icon-shopping.svg" alt=""></span><span><strong>家庭衣橱</strong></span></a>
       <nav id="tablet-nav" aria-label="主导航"></nav>
-      <div class="compact-actions"><button class="island-icon-button account-login" type="button" aria-label="管理登录"><img src="/public/island/assets/icons/icon-design.svg" alt=""></button><button class="island-icon-button account-logout" type="button" aria-label="退出登录" hidden><span aria-hidden="true">↪</span></button><button class="island-icon-button switch-classic" type="button" aria-label="切换经典 UI"><img src="/public/island/assets/icons/icon-variant.svg" alt=""></button></div>
+      <details class="system-menu">
+        <summary class="system-trigger system-trigger--compact" aria-label="系统与账户"><img src="/public/island/assets/icons/icon-design.svg" alt=""></summary>
+        <div class="system-popover">
+          <button class="system-action" type="button" data-auth-action><img src="/public/island/assets/icons/icon-design.svg" alt=""><span>管理登录</span></button>
+          <button class="system-action" type="button" data-install-app><img src="/public/island/assets/icons/icon-diy.svg" alt=""><span>安装应用</span></button>
+          <a class="system-action" href="/classic/view" data-classic-link><img src="/public/island/assets/icons/icon-variant.svg" alt=""><span>经典界面</span></a>
+        </div>
+      </details>
     </header>
 
     <header class="mobile-header">
-      <a class="brand" href="/view"><img src="/public/island/assets/icons/icon-leaf.png" alt=""><span id="mobile-title">衣橱</span></a>
-      <div class="compact-actions"><button class="island-icon-button account-login" type="button" aria-label="管理登录"><img src="/public/island/assets/icons/icon-design.svg" alt=""></button><button class="island-icon-button account-logout" type="button" aria-label="退出登录" hidden><span aria-hidden="true">↪</span></button><button class="island-icon-button switch-classic" type="button" aria-label="切换经典 UI"><img src="/public/island/assets/icons/icon-variant.svg" alt=""></button></div>
+      <a class="brand" href="/view"><span class="brand-mark"><img src="/public/island/assets/icons/icon-shopping.svg" alt=""></span><span id="mobile-title">衣橱</span></a>
+      <details class="system-menu">
+        <summary class="system-trigger system-trigger--compact" aria-label="系统与账户"><img src="/public/island/assets/icons/icon-design.svg" alt=""></summary>
+        <div class="system-popover">
+          <button class="system-action" type="button" data-auth-action><img src="/public/island/assets/icons/icon-design.svg" alt=""><span>管理登录</span></button>
+          <button class="system-action" type="button" data-install-app><img src="/public/island/assets/icons/icon-diy.svg" alt=""><span>安装应用</span></button>
+          <a class="system-action" href="/classic/view" data-classic-link><img src="/public/island/assets/icons/icon-variant.svg" alt=""><span>经典界面</span></a>
+        </div>
+      </details>
     </header>
 
     <main id="main-view" tabindex="-1">
@@ -50,29 +73,20 @@
     <nav id="mobile-nav" class="mobile-nav" aria-label="主导航"></nav>
   </div>
 
-  <div id="login-dialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="login-title" hidden tabindex="-1">
-    <div class="dialog island-panel">
-      <button class="island-icon-button dialog-close" type="button" aria-label="关闭">×</button>
-      <img class="dialog-art" src="/public/island/assets/icons/icon-design.svg" alt="">
-      <h2 id="login-title">管理登录</h2>
-      <p>登录后可以新增、编辑和整理衣物。</p>
-      <form id="login-form">
-        <label for="login-password">管理密码</label>
-        <input class="island-field" id="login-password" name="password" type="password" required autocomplete="current-password">
-        <p id="login-error" class="form-error" role="alert"></p>
-        <button class="island-button island-button--primary" type="submit">进入管理模式</button>
-      </form>
-    </div>
-  </div>
-
   <div id="filter-drawer" class="overlay drawer-overlay" role="dialog" aria-modal="true" aria-labelledby="filter-title" hidden tabindex="-1">
-    <aside class="drawer island-panel"><button class="island-icon-button dialog-close" type="button" aria-label="关闭">×</button><h2 id="filter-title">更多筛选</h2><div id="filter-content"></div></aside>
+    <aside class="drawer island-panel">
+      <button class="island-icon-button dialog-close" type="button" aria-label="关闭">×</button>
+      <p class="section-kicker">整理视图</p><h2 id="filter-title">筛选衣橱</h2>
+      <img class="drawer-divider" src="/public/island/assets/dividers/divider-line-teal.svg" alt="">
+      <div id="filter-content"></div>
+    </aside>
   </div>
   <div id="detail-dialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="detail-title" hidden tabindex="-1"><div class="dialog detail-dialog island-panel"><button class="island-icon-button dialog-close" type="button" aria-label="关闭">×</button><div id="detail-content"></div></div></div>
   <div id="confirm-dialog" class="overlay" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" hidden tabindex="-1"><div class="dialog confirm-dialog island-panel"><h2 id="confirm-title">请确认</h2><p id="confirm-message"></p><div class="dialog-actions"><button class="island-button confirm-cancel" type="button">取消</button><button class="island-button island-button--primary confirm-accept" type="button">确认</button></div></div></div>
   <div id="toast-region" class="toast-region" aria-live="polite"></div>
 
   <script src="/public/shared/utils.js"></script>
+  <script type="module" src="/public/island/js/pwa.mjs"></script>
   <script type="module" src="/public/island/js/app.mjs"></script>
 </body>
 </html>

@@ -14,7 +14,7 @@ export function getNavItems(isAdmin) {
 }
 
 export const ASSETS = {
-  leaf: '/public/island/assets/icons/icon-leaf.png',
+  shopping: '/public/island/assets/icons/icon-shopping.svg',
   empty: '/public/island/assets/icons/icon-variant.svg',
   detail: '/public/island/assets/icons/icon-design.svg',
   divider: '/public/island/assets/dividers/divider-line-teal.svg',

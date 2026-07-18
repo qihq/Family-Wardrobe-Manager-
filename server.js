@@ -130,8 +130,24 @@ app.use('/photos', express.static(PHOTO_BASE));
 
 // ─── 页面路由 ─────────────────────────────────────────────────────
 app.get('/',            (req, res) => res.redirect('/view'));
-app.get(['/view', '/admin', '/admin/login'], (req, res) =>
+app.get('/manifest.webmanifest', (req, res) => {
+  res.type('application/manifest+json');
+  res.sendFile(path.join(__dirname, 'public/island/manifest.webmanifest'));
+});
+app.get('/sw.js', (req, res) => {
+  res.set('Service-Worker-Allowed', '/');
+  res.set('Cache-Control', 'no-cache');
+  res.type('application/javascript');
+  res.sendFile(path.join(__dirname, 'public/island/sw.js'));
+});
+app.get('/view', (req, res) =>
   res.sendFile(path.join(__dirname, 'public/island/index.html')));
+app.get('/login', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/island/login.html')));
+app.get(['/admin', '/admin/login'], (req, res) => {
+  if (!req.session.isAdmin) return res.redirect('/login?next=%2Fadmin');
+  res.sendFile(path.join(__dirname, 'public/island/index.html'));
+});
 app.get('/classic/view', (req, res) =>
   res.sendFile(path.join(__dirname, 'public/view/index.html')));
 app.get('/classic/admin', (req, res) => {

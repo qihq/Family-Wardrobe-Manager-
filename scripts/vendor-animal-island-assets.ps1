@@ -19,11 +19,14 @@ $Assets = @(
   'img/icons/icon-map.svg',
   'img/icons/icon-miles.svg',
   'img/icons/icon-design.svg',
+  'img/icons/icon-diy.svg',
   'img/icons/icon-variant.svg',
   'img/dividers/divider-line-brown.svg',
   'img/dividers/divider-line-teal.svg',
   'img/dividers/divider-line-yellow.svg',
-  'img/dividers/wave-yellow.svg'
+  'img/dividers/wave-yellow.svg',
+  'img/footer/footer-sea.svg',
+  'img/footer/footer-tree.webp'
 )
 
 foreach ($asset in $Assets) {
