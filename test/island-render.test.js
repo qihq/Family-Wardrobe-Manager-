@@ -47,3 +47,28 @@ test('active filters have labelled removal controls and collection states are di
   assert.match(renderCollectionState('empty', '衣橱还是空的'), /data-state="empty"/);
   assert.match(renderCollectionState('error', '加载失败'), /role="alert"/);
 });
+
+test('item form validates required values and builds compatible form data', async () => {
+  const { validateItem, buildItemFormData, nextMobileStep } = await import('../public/island/js/item-form.mjs');
+  assert.deepEqual(validateItem({ member: '', clothingType: '' }), { member: '请选择家庭成员', clothingType: '请选择衣物类型' });
+  assert.equal(nextMobileStep(1, { clothingType: '' }), 1);
+  assert.equal(nextMobileStep(1, { clothingType: '上衣' }), 2);
+  const data = buildItemFormData({ member: '小明', clothingType: '上衣', seasons: ['春'], favorite: true }, { display: new Blob(['photo']), thumb: new Blob(['thumb']) });
+  assert.equal(data.get('seasons'), '["春"]');
+  assert.equal(data.get('favorite'), 'true');
+  assert.equal(data.get('photo').name, 'photo.jpg');
+  assert.equal(data.get('thumb').name, 'thumb.jpg');
+});
+
+test('statistics derive stored categories and map back to wardrobe filters', async () => {
+  const { deriveStats, statsFilter } = await import('../public/island/js/stats.mjs');
+  const clothes = [
+    { id: 'c1', member: '小明', clothingType: '上衣', status: '在用', seasons: ['四季'], favorite: true },
+    { id: 'c2', member: '小花', clothingType: '鞋子', status: '闲置', seasons: ['春'], favorite: false }
+  ];
+  const stats = deriveStats(clothes, [{ id: 'm1', name: '小明' }, { id: 'm2', name: '小花' }]);
+  assert.equal(stats.find(stat => stat.key === 'total').count, 2);
+  assert.equal(stats.find(stat => stat.key === 'season:四季').count, 1);
+  assert.equal(stats.find(stat => stat.key === 'season:春').count, 1);
+  assert.deepEqual(statsFilter(stats.find(stat => stat.key === 'member:小明')), { section: 'wardrobe', filters: { member: ['小明'] } });
+});

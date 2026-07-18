@@ -14,6 +14,20 @@
   .detail-layout { grid-template-columns: 1fr; }
   .detail-photo { min-height: 280px; }
   .detail-copy dl { grid-template-columns: 1fr 1fr; }
+  .item-form { display: block; padding: 18px; }
+  .mobile-stepper { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 18px; }
+  .mobile-stepper span { flex: 1; padding: 8px; border-radius: 999px; background: var(--island-surface-alt); color: var(--island-muted); text-align: center; }
+  .mobile-stepper span.is-current { background: var(--island-primary-soft); color: #246e67; font-weight: 900; }
+  .mobile-step { display: none; }
+  .mobile-step.is-current { display: grid; }
+  .upload-zone { min-height: 320px; }
+  .type-choice { grid-template-columns: 1fr 1fr; }
+  .field-grid { grid-template-columns: 1fr 1fr; }
+  .form-actions { display: flex; margin-top: 20px; }
+  .step-back, .step-next { display: inline-flex; }
+  .members-layout { grid-template-columns: 1fr; }
+  .member-row { align-items: flex-start; flex-direction: column; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
@@ -25,6 +39,9 @@
   .wardrobe-toolbar { grid-template-columns: minmax(220px, 1fr) auto; }
   .wardrobe-toolbar .shortcut-row { grid-column: 1 / -1; grid-row: 2; }
   .wardrobe-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .item-form { grid-template-columns: minmax(240px, .8fr) minmax(360px, 1.2fr); }
+  .type-choice { grid-template-columns: repeat(3, 1fr); }
+  .members-layout { grid-template-columns: 300px 1fr; }
 }
 
 @media (min-width: 1024px) { .sidebar { display: flex; } }

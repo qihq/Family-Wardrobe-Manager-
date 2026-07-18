@@ -5,6 +5,9 @@ import { api } from './api.mjs';
 import { createOverlay } from './overlay.mjs';
 import { initAuth } from './auth.mjs';
 import { initWardrobe } from './wardrobe.mjs';
+import { createItemFormController } from './item-form.mjs';
+import { initMembers } from './members.mjs';
+import { initStats } from './stats.mjs';
 
 const store = createStore({ ...initialState, route: parseRoute(location.search) });
 const overlays = Object.fromEntries(['login-dialog', 'filter-drawer', 'detail-dialog', 'confirm-dialog'].map(id => [id, createOverlay(document.getElementById(id))]));
@@ -24,12 +27,41 @@ const navigate = createNavigator({
 });
 
 const auth = initAuth({ store, api, loginOverlay: overlays['login-dialog'], navigate, notify });
+async function reloadAll() {
+  const members = await api.getMembers();
+  store.setState(state => ({ ...state, members }));
+  await wardrobe.loadClothes();
+}
+
+function confirmAction(message) {
+  return new Promise(resolve => {
+    const overlay = overlays['confirm-dialog'];
+    const dialog = document.getElementById('confirm-dialog');
+    dialog.querySelector('#confirm-message').textContent = message;
+    const accept = dialog.querySelector('.confirm-accept');
+    const cancel = dialog.querySelector('.confirm-cancel');
+    const finish = value => { accept.onclick = null; cancel.onclick = null; overlay.close(); resolve(value); };
+    accept.onclick = () => finish(true); cancel.onclick = () => finish(false); overlay.open();
+  });
+}
+
+let itemForm;
 const wardrobe = initWardrobe({
   root: document.getElementById('wardrobe-view'), store, api, overlays, navigate, notify,
   handleUnauthorized: auth.handleUnauthorized,
-  onEdit: () => notify('编辑功能正在载入', 'status'),
-  confirmDelete: () => notify('删除功能正在载入', 'status')
+  onEdit: item => { itemForm.open(item); navigate({ section: 'add' }); },
+  confirmDelete: async item => {
+    if (!await confirmAction(`确定删除「${item.name || item.clothingType}」吗？图片也会一并删除。`)) return;
+    try { await api.deleteClothes(item.id); overlays['detail-dialog'].close(); notify('衣物已删除', 'success'); await wardrobe.loadClothes(); }
+    catch (error) { if (!auth.handleUnauthorized(error)) notify(error.message, 'error'); }
+  }
 });
+itemForm = createItemFormController({
+  root: document.getElementById('add-view'), store, api, notify, handleUnauthorized: auth.handleUnauthorized,
+  onSaved: async () => { navigate({ section: 'wardrobe' }); await wardrobe.loadClothes(); }
+});
+initMembers({ root: document.getElementById('members-view'), store, api, notify, handleUnauthorized: auth.handleUnauthorized, reloadAll, confirm: confirmAction });
+initStats({ root: document.getElementById('stats-view'), store, navigate });
 
 function renderNavigation(state) {
   const items = getNavItems(state.auth.isAdmin);
