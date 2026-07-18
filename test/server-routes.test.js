@@ -2,6 +2,8 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const { startServerFixture } = require('./helpers/server-fixture');
 
 test('canonical routes serve island UI and classic routes keep authorization', async t => {
@@ -33,4 +35,12 @@ test('canonical routes serve island UI and classic routes keep authorization', a
   response = await fx.request('/classic/admin/login');
   html = await response.text();
   assert.match(html, /data-switch-ui="island"/);
+});
+
+test('public config mount is never served as a static asset', async t => {
+  const source = fs.readFileSync(path.resolve(__dirname, '..', 'server.js'), 'utf8');
+  assert.match(source, /app\.get\('\/public\/config\.json',[\s\S]*sendStatus\(404\)/);
+  const fx = await startServerFixture(t);
+  const response = await fx.request('/public/config.json');
+  assert.equal(response.status, 404);
 });

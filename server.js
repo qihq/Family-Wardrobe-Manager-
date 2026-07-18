@@ -12,8 +12,14 @@ function resolveRuntimePath(value, fallback) {
   return path.isAbsolute(configured) ? configured : path.resolve(__dirname, configured);
 }
 
+function resolveConfigPath(exists = fs.existsSync) {
+  const standard = path.join(__dirname, 'config.json');
+  if (exists(standard)) return standard;
+  return path.join(__dirname, 'public', 'config.json');
+}
+
 function createWardrobeApp(options = {}) {
-const config        = options.config || JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+const config        = options.config || JSON.parse(fs.readFileSync(resolveConfigPath(), 'utf8'));
 const ADMIN_PWD     = config.adminPassword;
 const SESSION_SEC   = config.sessionSecret;
 const PHOTO_BASE    = resolveRuntimePath(options.photoBaseDir || process.env.WARDROBE_PHOTO_DIR || config.photoBaseDir, 'photos');
@@ -118,6 +124,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: { maxAge: 8 * 60 * 60 * 1000 }
 }));
+app.get('/public/config.json', (req, res) => res.sendStatus(404));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/photos', express.static(PHOTO_BASE));
 
@@ -341,7 +348,7 @@ return app;
 }
 
 if (require.main === module) {
-  const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+  const config = JSON.parse(fs.readFileSync(resolveConfigPath(), 'utf8'));
   const port = Number(process.env.PORT || config.port || 3000);
   createWardrobeApp({ config }).listen(port, () => {
     console.log(`✅ 衣橱管理系统已启动`);
@@ -350,4 +357,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createWardrobeApp, resolveRuntimePath };
+module.exports = { createWardrobeApp, resolveConfigPath, resolveRuntimePath };

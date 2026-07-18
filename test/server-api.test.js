@@ -4,10 +4,14 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { startServerFixture } = require('./helpers/server-fixture');
-const { resolveRuntimePath } = require('../server');
+const { resolveConfigPath, resolveRuntimePath } = require('../server');
 
 test('relative runtime paths resolve from the application directory', () => {
   assert.equal(resolveRuntimePath('./photos', 'photos'), require('node:path').join(require('node:path').resolve(__dirname, '..'), 'photos'));
+});
+
+test('config path supports the current NAS public bind mount', () => {
+  assert.equal(resolveConfigPath(path => path.endsWith('public\\config.json') || path.endsWith('public/config.json')), require('node:path').join(require('node:path').resolve(__dirname, '..'), 'public', 'config.json'));
 });
 
 test('visitor filters and admin completes clothing mutations', async t => {
