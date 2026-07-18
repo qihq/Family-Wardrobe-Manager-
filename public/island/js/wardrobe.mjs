@@ -1,5 +1,13 @@
 import { CLOTHING_TYPES, SEASONS, STATUSES } from './constants.mjs';
-import { renderActiveFilters, renderClothesCard, renderCollectionState, renderItemDetail } from './render.mjs';
+import { escapeHtml, renderActiveFilters, renderClothesCard, renderCollectionState, renderItemDetail } from './render.mjs';
+
+export function renderMemberShortcuts(members, selectedMembers) {
+  return members.map(member => `<button class="island-pill${selectedMembers.includes(member.name) ? ' is-selected' : ''}" type="button" data-shortcut="member" data-value="${escapeHtml(member.name)}">${escapeHtml(member.name)}</button>`).join('');
+}
+
+export function filterDrawerSelection(filters) {
+  return { season: new Set(filters.season || []), status: new Set(filters.status || []), favorite: Boolean(filters.favorite) };
+}
 
 export function initWardrobe({ root, store, api, overlays, navigate, notify, handleUnauthorized, onEdit, confirmDelete }) {
   let controller;
@@ -19,7 +27,7 @@ export function initWardrobe({ root, store, api, overlays, navigate, notify, han
 
   function renderShortcuts(state) {
     const selectedMembers = state.route.filters.member;
-    document.getElementById('member-shortcuts').innerHTML = state.members.map(member => `<button class="island-pill${selectedMembers.includes(member.name) ? ' is-selected' : ''}" type="button" data-shortcut="member" data-value="${member.name}">${member.name}</button>`).join('');
+    document.getElementById('member-shortcuts').innerHTML = renderMemberShortcuts(state.members, selectedMembers);
     document.getElementById('type-shortcuts').innerHTML = CLOTHING_TYPES.map(value => `<button class="island-pill${state.route.filters.type.includes(value) ? ' is-selected' : ''}" type="button" data-shortcut="type" data-value="${value}">${value}</button>`).join('');
   }
 
@@ -98,7 +106,14 @@ export function initWardrobe({ root, store, api, overlays, navigate, notify, han
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => { navigate({ filters: { q: event.target.value.trim() } }, { replace: true }); loadClothes(); }, 250);
   });
-  document.getElementById('more-filters').addEventListener('click', event => filterDrawer.open(event.currentTarget));
+  document.getElementById('more-filters').addEventListener('click', event => {
+    const selected = filterDrawerSelection(store.getState().route.filters);
+    const content = document.getElementById('filter-content');
+    content.querySelectorAll('input[name="season"]').forEach(input => { input.checked = selected.season.has(input.value); });
+    content.querySelectorAll('input[name="status"]').forEach(input => { input.checked = selected.status.has(input.value); });
+    content.querySelector('input[name="favorite"]').checked = selected.favorite;
+    filterDrawer.open(event.currentTarget);
+  });
   document.querySelector('[data-filter-apply]').addEventListener('click', () => {
     const content = document.getElementById('filter-content');
     const values = name => Array.from(content.querySelectorAll(`input[name="${name}"]:checked`)).map(input => input.value);

@@ -1,4 +1,5 @@
 import { CLOTHING_TYPES, SEASONS, STATUSES } from './constants.mjs';
+import { escapeHtml } from './render.mjs';
 
 export function validateItem(values) {
   const errors = {};
@@ -24,6 +25,18 @@ export function buildItemFormData(values, blobs = {}) {
 export function nextMobileStep(step, values) {
   if (step === 1 && !values.clothingType) return 1;
   return Math.min(step + 1, 2);
+}
+
+export function stepControlVisibility(step, isMobile) {
+  return isMobile
+    ? { back: step === 0, next: step === 2, submit: step !== 2 }
+    : { back: true, next: true, submit: false };
+}
+
+export function renderMemberOptions(members) {
+  return '<option value="">请选择</option>' + members
+    .map(member => `<option value="${escapeHtml(member.name)}">${escapeHtml(member.name)}</option>`)
+    .join('');
 }
 
 function formMarkup() {
@@ -57,6 +70,7 @@ export function createItemFormController({ root, store, api, onSaved, notify, ha
   let previewUrl = null;
   let step = 0;
   let busy = false;
+  const mobileQuery = matchMedia('(max-width: 767px)');
 
   function values() {
     const data = new FormData(form);
@@ -72,15 +86,16 @@ export function createItemFormController({ root, store, api, onSaved, notify, ha
     step = Math.max(0, Math.min(2, next));
     form.querySelectorAll('[data-step-panel]').forEach(panel => panel.classList.toggle('is-current', Number(panel.dataset.stepPanel) === step));
     form.querySelectorAll('[data-step-dot]').forEach(dot => dot.classList.toggle('is-current', Number(dot.dataset.stepDot) === step));
-    form.querySelector('.step-back').hidden = step === 0;
-    form.querySelector('.step-next').hidden = step === 2;
-    form.querySelector('.form-submit').hidden = step !== 2;
+    const visibility = stepControlVisibility(step, mobileQuery.matches);
+    form.querySelector('.step-back').hidden = visibility.back;
+    form.querySelector('.step-next').hidden = visibility.next;
+    form.querySelector('.form-submit').hidden = visibility.submit;
   }
 
   function populateMembers() {
     const select = form.elements.member;
     const current = select.value;
-    select.innerHTML = '<option value="">请选择</option>' + store.getState().members.map(member => `<option value="${member.name}">${member.name}</option>`).join('');
+    select.innerHTML = renderMemberOptions(store.getState().members);
     select.value = current;
   }
 
@@ -103,7 +118,7 @@ export function createItemFormController({ root, store, api, onSaved, notify, ha
     if (item) {
       ['member','clothingType','name','size','color','brand','status','notes','seasons','favorite'].forEach(key => setFormValue(key, item[key]));
       const image = item.photoPath || item.thumbPath;
-      if (image) preview.innerHTML = `<img src="${image}" alt="当前衣物图片">`;
+      if (image) preview.innerHTML = `<img src="${escapeHtml(image)}" alt="当前衣物图片">`;
     }
     showStep(0);
   }
@@ -138,6 +153,8 @@ export function createItemFormController({ root, store, api, onSaved, notify, ha
     finally { submit.disabled = false; submit.textContent = editingItem ? '保存修改' : '保存衣物'; }
   });
   store.subscribe(populateMembers);
+  const handleViewportChange = () => showStep(step);
+  mobileQuery.addEventListener('change', handleViewportChange);
   reset();
-  return { open(item = null) { reset(item); }, reset, submit: () => form.requestSubmit(), destroy() { if (previewUrl) URL.revokeObjectURL(previewUrl); } };
+  return { open(item = null) { reset(item); }, reset, submit: () => form.requestSubmit(), destroy() { mobileQuery.removeEventListener('change', handleViewportChange); if (previewUrl) URL.revokeObjectURL(previewUrl); } };
 }

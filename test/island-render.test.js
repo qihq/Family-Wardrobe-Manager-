@@ -82,8 +82,33 @@ test('item form validates required values and builds compatible form data', asyn
 });
 
 test('mobile item flow starts at photo then advances to classification', async () => {
-  const { nextMobileStep } = await import('../public/island/js/item-form.mjs');
+  const { nextMobileStep, stepControlVisibility } = await import('../public/island/js/item-form.mjs');
   assert.equal(nextMobileStep(0, {}), 1);
+  assert.deepEqual(stepControlVisibility(0, false), { back: true, next: true, submit: false });
+  assert.deepEqual(stepControlVisibility(0, true), { back: true, next: false, submit: true });
+});
+
+test('member-generated controls escape stored names', async () => {
+  const { renderMemberShortcuts } = await import('../public/island/js/wardrobe.mjs');
+  const { renderMemberOptions } = await import('../public/island/js/item-form.mjs');
+  const member = { name: '"><img src=x onerror=alert(1)>' };
+  for (const markup of [renderMemberShortcuts([member], []), renderMemberOptions([member])]) {
+    assert.doesNotMatch(markup, /<img/);
+    assert.match(markup, /&quot;&gt;&lt;img/);
+  }
+});
+
+test('filter drawer selection mirrors route state', async () => {
+  const { filterDrawerSelection } = await import('../public/island/js/wardrobe.mjs');
+  assert.deepEqual(filterDrawerSelection({ season: ['春'], status: ['闲置'], favorite: true }), {
+    season: new Set(['春']), status: new Set(['闲置']), favorite: true
+  });
+});
+
+test('history and statistics selections reload wardrobe data', () => {
+  const app = fs.readFileSync(path.join(root, 'public/island/js/app.mjs'), 'utf8');
+  assert.match(app, /popstate[\s\S]*wardrobe\.loadClothes/);
+  assert.match(app, /initStats\([\s\S]*api[\s\S]*onSelect[\s\S]*wardrobe\.loadClothes/);
 });
 
 test('mobile navigation lays out destinations horizontally', () => {
@@ -105,4 +130,11 @@ test('statistics derive stored categories and map back to wardrobe filters', asy
     section: 'wardrobe',
     filters: { q: '', member: ['小明'], type: [], season: [], status: [], favorite: false }
   });
+});
+
+test('classic admin exposes a desktop switch to island UI', () => {
+  const html = fs.readFileSync(path.join(root, 'public/admin/index.html'), 'utf8');
+  const sidenav = html.slice(html.indexOf('class="sidenav-footer"'), html.indexOf('</aside>'));
+  assert.match(sidenav, /data-switch-ui="island"/);
+  assert.match(html, /querySelectorAll\('\[data-switch-ui="island"\]'\)/);
 });

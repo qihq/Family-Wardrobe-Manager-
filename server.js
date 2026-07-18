@@ -7,12 +7,17 @@ const path    = require('path');
 const fs      = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
+function resolveRuntimePath(value, fallback) {
+  const configured = value || fallback;
+  return path.isAbsolute(configured) ? configured : path.resolve(__dirname, configured);
+}
+
 function createWardrobeApp(options = {}) {
 const config        = options.config || JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
 const ADMIN_PWD     = config.adminPassword;
 const SESSION_SEC   = config.sessionSecret;
-const PHOTO_BASE    = path.resolve(options.photoBaseDir || process.env.WARDROBE_PHOTO_DIR || config.photoBaseDir || './photos');
-const DATA_DIR      = path.resolve(options.dataDir || process.env.WARDROBE_DATA_DIR || path.join(__dirname, 'data'));
+const PHOTO_BASE    = resolveRuntimePath(options.photoBaseDir || process.env.WARDROBE_PHOTO_DIR || config.photoBaseDir, 'photos');
+const DATA_DIR      = resolveRuntimePath(options.dataDir || process.env.WARDROBE_DATA_DIR, 'data');
 const WARDROBE_FILE = path.join(DATA_DIR, 'wardrobe.json');
 const MEMBERS_FILE  = path.join(DATA_DIR, 'members.json');
 const logger        = options.logger || console;
@@ -345,4 +350,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createWardrobeApp };
+module.exports = { createWardrobeApp, resolveRuntimePath };

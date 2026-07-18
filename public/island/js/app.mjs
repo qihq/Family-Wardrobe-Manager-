@@ -8,6 +8,7 @@ import { initWardrobe } from './wardrobe.mjs';
 import { createItemFormController } from './item-form.mjs';
 import { initMembers } from './members.mjs';
 import { initStats } from './stats.mjs';
+import { toClassicPath } from './preference.mjs';
 
 const store = createStore({ ...initialState, route: parseRoute(location.search) });
 const overlays = Object.fromEntries(['login-dialog', 'filter-drawer', 'detail-dialog', 'confirm-dialog'].map(id => [id, createOverlay(document.getElementById(id))]));
@@ -67,7 +68,7 @@ itemForm = createItemFormController({
   onSaved: async () => { navigate({ section: 'wardrobe' }); await wardrobe.loadClothes(); }
 });
 initMembers({ root: document.getElementById('members-view'), store, api, notify, handleUnauthorized: auth.handleUnauthorized, reloadAll, confirm: confirmAction });
-initStats({ root: document.getElementById('stats-view'), store, navigate });
+initStats({ root: document.getElementById('stats-view'), store, api, navigate, onSelect: () => wardrobe.loadClothes() });
 
 function renderNavigation(state) {
   const items = getNavItems(state.auth.isAdmin);
@@ -93,9 +94,12 @@ function render(state) {
 store.subscribe(render);
 document.querySelectorAll('.account-login').forEach(button => button.addEventListener('click', () => auth.openLogin(button)));
 document.querySelectorAll('.account-logout').forEach(button => button.addEventListener('click', auth.logout));
-document.querySelectorAll('.switch-classic').forEach(button => button.addEventListener('click', () => { localStorage.setItem('wardrobe_ui_v1', 'classic'); location.assign('/classic/view' + location.search); }));
+document.querySelectorAll('.switch-classic').forEach(button => button.addEventListener('click', () => { localStorage.setItem('wardrobe_ui_v1', 'classic'); location.assign(toClassicPath(new URL(location.href))); }));
 document.querySelectorAll('.dialog-close').forEach(button => button.addEventListener('click', () => overlays[button.closest('.overlay').id].close()));
-window.addEventListener('popstate', () => store.setState(state => ({ ...state, route: parseRoute(location.search) })));
+window.addEventListener('popstate', () => {
+  store.setState(state => ({ ...state, route: parseRoute(location.search) }));
+  wardrobe.loadClothes();
+});
 
 render(store.getState());
 Promise.all([auth.check(), api.getMembers().then(members => store.setState(state => ({ ...state, members })))])

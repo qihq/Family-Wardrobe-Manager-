@@ -23,6 +23,12 @@ test('explicit island preference maps classic URL without a loop', async () => {
   );
 });
 
+test('island switch preserves public and management route context', async () => {
+  const { toClassicPath } = await import('../public/island/js/preference.mjs');
+  assert.equal(toClassicPath(new URL('http://x/admin?section=members')), '/classic/admin?section=members');
+  assert.equal(toClassicPath(new URL('http://x/admin/login?next=members')), '/classic/admin/login?next=members');
+});
+
 test('route state round trips unicode multi filters and guards admin sections', async () => {
   const { parseRoute, serializeRoute, isAllowedSection, shouldResetScroll } = await import('../public/island/js/router.mjs');
   const route = parseRoute('?section=wardrobe&member=小明,小花&season=春&favorite=true&q=蓝色');

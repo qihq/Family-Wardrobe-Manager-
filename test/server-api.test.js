@@ -4,6 +4,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { startServerFixture } = require('./helpers/server-fixture');
+const { resolveRuntimePath } = require('../server');
+
+test('relative runtime paths resolve from the application directory', () => {
+  assert.equal(resolveRuntimePath('./photos', 'photos'), require('node:path').join(require('node:path').resolve(__dirname, '..'), 'photos'));
+});
 
 test('visitor filters and admin completes clothing mutations', async t => {
   const fx = await startServerFixture(t, {

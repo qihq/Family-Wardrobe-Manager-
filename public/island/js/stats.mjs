@@ -20,17 +20,33 @@ export function statsFilter(stat) {
   };
 }
 
-export function initStats({ root, store, navigate }) {
+export function initStats({ root, store, api, navigate, onSelect }) {
   root.innerHTML = `<header class="section-heading"><div><p class="section-kicker">衣橱概览</p><h1>统计</h1><p class="section-summary">点击数字，返回衣橱查看对应衣物。</p></div></header><div id="stats-grid" class="stats-grid"></div>`;
   const grid = root.querySelector('#stats-grid');
+  let allClothes = [];
+  let loading = false;
+  let wasVisible = false;
   function render(state) {
-    grid.innerHTML = deriveStats(state.clothes, state.members).map(stat => `<button class="stat-tile island-panel" type="button" data-stat="${escapeHtml(stat.key)}" aria-label="${escapeHtml(stat.label)}：${stat.count} 件"><strong>${stat.count}</strong><span>${escapeHtml(stat.label)}</span></button>`).join('');
+    grid.innerHTML = deriveStats(allClothes, state.members).map(stat => `<button class="stat-tile island-panel" type="button" data-stat="${escapeHtml(stat.key)}" aria-label="${escapeHtml(stat.label)}：${stat.count} 件"><strong>${stat.count}</strong><span>${escapeHtml(stat.label)}</span></button>`).join('');
+  }
+  async function loadAll(state) {
+    if (loading || state.route.section !== 'stats') return;
+    loading = true;
+    try { allClothes = await api.getClothes({}); render(store.getState()); }
+    finally { loading = false; }
   }
   grid.addEventListener('click', event => {
     const button = event.target.closest('[data-stat]'); if (!button) return;
-    const stat = deriveStats(store.getState().clothes, store.getState().members).find(item => item.key === button.dataset.stat);
-    if (stat) navigate(statsFilter(stat));
+    const stat = deriveStats(allClothes, store.getState().members).find(item => item.key === button.dataset.stat);
+    if (stat) { navigate(statsFilter(stat)); onSelect(); }
   });
-  const unsubscribe = store.subscribe(render); render(store.getState());
+  const unsubscribe = store.subscribe(state => {
+    render(state);
+    const isVisible = state.route.section === 'stats';
+    if (isVisible && !wasVisible) loadAll(state);
+    wasVisible = isVisible;
+  });
+  render(store.getState());
+  if (store.getState().route.section === 'stats') { wasVisible = true; loadAll(store.getState()); }
   return { destroy: unsubscribe };
 }
