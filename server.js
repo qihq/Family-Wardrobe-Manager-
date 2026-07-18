@@ -7,15 +7,15 @@ const path    = require('path');
 const fs      = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
-// ─── 读取配置 ─────────────────────────────────────────────────────
-const config        = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
-const PORT          = config.port         || 3000;
+function createWardrobeApp(options = {}) {
+const config        = options.config || JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
 const ADMIN_PWD     = config.adminPassword;
 const SESSION_SEC   = config.sessionSecret;
-const PHOTO_BASE    = path.resolve(__dirname, config.photoBaseDir || './photos');
-const DATA_DIR      = path.join(__dirname, 'data');
+const PHOTO_BASE    = path.resolve(options.photoBaseDir || process.env.WARDROBE_PHOTO_DIR || config.photoBaseDir || './photos');
+const DATA_DIR      = path.resolve(options.dataDir || process.env.WARDROBE_DATA_DIR || path.join(__dirname, 'data'));
 const WARDROBE_FILE = path.join(DATA_DIR, 'wardrobe.json');
 const MEMBERS_FILE  = path.join(DATA_DIR, 'members.json');
+const logger        = options.logger || console;
 
 // ─── 确保目录存在 ─────────────────────────────────────────────────
 [DATA_DIR, PHOTO_BASE].forEach(dir => {
@@ -324,13 +324,21 @@ app.delete('/api/clothes/:id', requireAdmin, (req, res) => {
 
 // ─── 全局错误处理 ─────────────────────────────────────────────────
 app.use((err, req, res, next) => {
-  console.error(err);
+  logger.error(err);
   res.status(500).json({ message: err.message || '服务器内部错误' });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ 衣橱管理系统已启动`);
-  console.log(`   只读端: http://localhost:${PORT}/view`);
-  console.log(`   管理端: http://localhost:${PORT}/admin`);
-  console.log(`   图片根目录: ${PHOTO_BASE}`);
-});
+return app;
+}
+
+if (require.main === module) {
+  const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+  const port = Number(process.env.PORT || config.port || 3000);
+  createWardrobeApp({ config }).listen(port, () => {
+    console.log(`✅ 衣橱管理系统已启动`);
+    console.log(`   只读端: http://localhost:${port}/view`);
+    console.log(`   管理端: http://localhost:${port}/admin`);
+  });
+}
+
+module.exports = { createWardrobeApp };
