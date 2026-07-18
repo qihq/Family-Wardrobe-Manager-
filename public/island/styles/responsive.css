@@ -7,6 +7,13 @@
   .mobile-nav .nav-button img { width: 27px; height: 27px; }
   .overlay { align-items: end; padding: 0; }
   .dialog, .drawer { width: 100%; max-height: 90vh; min-height: auto; padding: 30px 20px calc(24px + env(safe-area-inset-bottom)); border-radius: var(--island-radius-lg) var(--island-radius-lg) 0 0; }
+  .section-heading { align-items: start; }
+  .wardrobe-toolbar { grid-template-columns: 1fr auto; }
+  .wardrobe-toolbar .shortcut-row { grid-column: 1 / -1; grid-row: 2; }
+  .wardrobe-grid { grid-template-columns: 1fr; }
+  .detail-layout { grid-template-columns: 1fr; }
+  .detail-photo { min-height: 280px; }
+  .detail-copy dl { grid-template-columns: 1fr 1fr; }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
@@ -15,6 +22,9 @@
   #tablet-nav .nav-list { display: flex; justify-content: center; }
   #tablet-nav .nav-button { width: auto; min-height: 46px; }
   #main-view { margin: 0; padding: 28px; }
+  .wardrobe-toolbar { grid-template-columns: minmax(220px, 1fr) auto; }
+  .wardrobe-toolbar .shortcut-row { grid-column: 1 / -1; grid-row: 2; }
+  .wardrobe-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 }
 
 @media (min-width: 1024px) { .sidebar { display: flex; } }

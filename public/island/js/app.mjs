@@ -4,6 +4,7 @@ import { initialState, createStore } from './state.mjs';
 import { api } from './api.mjs';
 import { createOverlay } from './overlay.mjs';
 import { initAuth } from './auth.mjs';
+import { initWardrobe } from './wardrobe.mjs';
 
 const store = createStore({ ...initialState, route: parseRoute(location.search) });
 const overlays = Object.fromEntries(['login-dialog', 'filter-drawer', 'detail-dialog', 'confirm-dialog'].map(id => [id, createOverlay(document.getElementById(id))]));
@@ -23,6 +24,12 @@ const navigate = createNavigator({
 });
 
 const auth = initAuth({ store, api, loginOverlay: overlays['login-dialog'], navigate, notify });
+const wardrobe = initWardrobe({
+  root: document.getElementById('wardrobe-view'), store, api, overlays, navigate, notify,
+  handleUnauthorized: auth.handleUnauthorized,
+  onEdit: () => notify('编辑功能正在载入', 'status'),
+  confirmDelete: () => notify('删除功能正在载入', 'status')
+});
 
 function renderNavigation(state) {
   const items = getNavItems(state.auth.isAdmin);
@@ -53,6 +60,8 @@ document.querySelectorAll('.dialog-close').forEach(button => button.addEventList
 window.addEventListener('popstate', () => store.setState(state => ({ ...state, route: parseRoute(location.search) })));
 
 render(store.getState());
-auth.check();
+Promise.all([auth.check(), api.getMembers().then(members => store.setState(state => ({ ...state, members })))])
+  .then(() => wardrobe.loadClothes())
+  .catch(error => notify(error.message, 'error'));
 
 export { store, api, navigate, overlays, auth, notify };

@@ -27,3 +27,51 @@ body.overlay-open { overflow: hidden; }
 .toast-region { position: fixed; z-index: 200; right: 24px; bottom: 24px; display: grid; gap: 10px; }
 .toast { max-width: 360px; padding: 12px 18px; border-radius: var(--island-radius); background: var(--island-text); color: #fff; box-shadow: var(--island-shadow-lg); }
 .toast--error { background: var(--island-danger); }
+.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.section-heading h1 { margin: 2px 0; font-size: clamp(30px, 4vw, 48px); line-height: 1.08; }
+.section-kicker { margin: 0; color: #287f76; font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.section-summary { margin: 6px 0 0; color: var(--island-muted); }
+.wardrobe-toolbar { display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(260px, 2fr) auto; gap: 14px; align-items: center; padding: 16px; }
+.shortcut-row { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; scrollbar-width: none; }
+.shortcut-row::-webkit-scrollbar { display: none; }
+.island-pill { white-space: nowrap; }
+.island-pill.is-selected { border-color: var(--island-primary); background: var(--island-primary-soft); color: #236e66; }
+.type-shortcuts { margin: 16px 0 4px; }
+.active-filters { display: flex; flex-wrap: wrap; gap: 8px; min-height: 42px; padding: 8px 0; }
+.active-filter { min-height: 34px; display: inline-flex; align-items: center; gap: 8px; padding: 5px 11px; border: 1px solid var(--island-border-light); border-radius: 999px; background: var(--island-surface-alt); cursor: pointer; }
+.wardrobe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: clamp(14px, 2vw, 24px); }
+.wardrobe-card { position: relative; overflow: hidden; border: 1px solid var(--island-border-light); border-radius: var(--island-radius-lg); background: var(--island-surface); box-shadow: var(--island-shadow); transition: transform var(--island-normal) var(--island-ease), box-shadow var(--island-normal) var(--island-ease); }
+.wardrobe-card:hover { transform: translateY(-3px); box-shadow: var(--island-shadow-lg); }
+.wardrobe-card__detail { width: 100%; display: block; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; }
+.wardrobe-card__media { display: block; aspect-ratio: 4 / 5; overflow: hidden; background: var(--island-surface-alt); }
+.wardrobe-card__media img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--island-normal) var(--island-ease); }
+.wardrobe-card:hover .wardrobe-card__media img { transform: scale(1.025); }
+.wardrobe-card__fallback { object-fit: contain !important; padding: 28%; opacity: .55; }
+.wardrobe-card__body { display: grid; gap: 5px; padding: 15px 16px 18px; }
+.wardrobe-card__body strong { overflow: hidden; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
+.wardrobe-card__meta, .wardrobe-card__tags { color: var(--island-muted); font-size: 13px; }
+.card-favorite { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(248,248,240,.92); color: #c88c00; font-size: 24px; cursor: pointer; box-shadow: var(--island-shadow); }
+.status-dot { width: 8px; height: 8px; display: inline-block; margin-right: 6px; border-radius: 50%; background: var(--island-muted); }
+.status-dot--在用 { background: var(--island-success); }
+.status-dot--闲置 { background: var(--island-warning); }
+.status-dot--已淘汰 { background: var(--island-danger); }
+.collection-state { min-height: 320px; display: grid; place-items: center; align-content: center; gap: 14px; text-align: center; color: var(--island-muted); }
+.collection-state img { width: 96px; height: 96px; object-fit: contain; opacity: .55; }
+.filter-groups { display: grid; gap: 26px; }
+.filter-groups fieldset { padding: 0; border: 0; }
+.filter-groups legend { margin-bottom: 10px; font-weight: 900; }
+.filter-groups fieldset > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.check-pill input { position: absolute; opacity: 0; pointer-events: none; }
+.check-pill span { min-height: 44px; display: inline-flex; align-items: center; padding: 7px 15px; border: 2px solid var(--island-border-light); border-radius: 999px; background: var(--island-page); cursor: pointer; }
+.check-pill input:checked + span { border-color: var(--island-primary); background: var(--island-primary-soft); }
+.drawer-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.detail-layout { display: grid; grid-template-columns: minmax(260px, 1fr) 1fr; gap: 28px; }
+.detail-photo { overflow: hidden; min-height: 380px; border-radius: var(--island-radius); background: var(--island-surface-alt); }
+.detail-photo img { width: 100%; height: 100%; max-height: 560px; object-fit: contain; }
+.detail-copy h2 { margin: 4px 0 20px; text-align: left; font-size: 32px; }
+.detail-copy dl { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.detail-copy dl div { padding: 12px; border-radius: var(--island-radius-sm); background: var(--island-page); }
+.detail-copy dt { color: var(--island-muted); font-size: 12px; }
+.detail-copy dd { margin: 3px 0 0; font-weight: 700; }
+.detail-actions { display: flex; gap: 10px; margin-top: 22px; }
+.danger-button { border-color: var(--island-danger); color: var(--island-danger); }
