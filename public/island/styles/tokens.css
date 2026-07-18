@@ -1,0 +1,31 @@
+@font-face { font-family: Nunito; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/nunito-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: Nunito; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/nunito-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: Nunito; font-style: normal; font-weight: 900; font-display: swap; src: url('../assets/fonts/nunito-latin-900-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Noto Sans SC'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/noto-sans-sc-latin-400-normal.woff2') format('woff2'), url('../assets/fonts/noto-sans-sc-chinese-simplified-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Noto Sans SC'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/noto-sans-sc-latin-500-normal.woff2') format('woff2'), url('../assets/fonts/noto-sans-sc-chinese-simplified-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Noto Sans SC'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/noto-sans-sc-latin-700-normal.woff2') format('woff2'), url('../assets/fonts/noto-sans-sc-chinese-simplified-700-normal.woff2') format('woff2'); }
+
+:root {
+  --island-primary: #19c8b9;
+  --island-primary-hover: #3dd4c6;
+  --island-primary-active: #50b9ab;
+  --island-primary-soft: #e6f9f6;
+  --island-success: #6fba2c;
+  --island-warning: #f5c31c;
+  --island-danger: #e05a5a;
+  --island-text: #794f27;
+  --island-muted: #9f927d;
+  --island-border: #aaa69d;
+  --island-border-light: #e8e2d6;
+  --island-page: #f8f8f0;
+  --island-surface: #f7f3df;
+  --island-surface-alt: #f0e8d8;
+  --island-radius-sm: 16px;
+  --island-radius: 18px;
+  --island-radius-lg: 24px;
+  --island-shadow-sm: 0 2px 4px rgba(61, 52, 40, 0.06);
+  --island-shadow: 0 3px 10px rgba(61, 52, 40, 0.1);
+  --island-shadow-lg: 0 8px 24px rgba(61, 52, 40, 0.14);
+  --island-normal: 250ms;
+  --island-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
