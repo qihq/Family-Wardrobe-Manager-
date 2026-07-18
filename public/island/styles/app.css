@@ -2,6 +2,7 @@ body.overlay-open { overflow: hidden; }
 .app-shell { min-height: 100vh; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--island-text); font-size: 18px; font-weight: 900; text-decoration: none; }
 .brand img { width: 34px; height: 34px; object-fit: contain; }
+.compact-actions { display: flex; gap: 6px; }
 .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 20; width: 232px; display: flex; flex-direction: column; gap: 28px; padding: 26px 18px; background: var(--island-surface); border-right: 1px solid var(--island-border-light); }
 .nav-list { display: grid; gap: 8px; }
 .nav-button { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; border-radius: var(--island-radius); background: transparent; color: var(--island-text); cursor: pointer; font-weight: 700; text-align: left; }

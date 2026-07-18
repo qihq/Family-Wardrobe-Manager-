@@ -23,7 +23,13 @@ function notify(message, type = 'status') {
 
 const navigate = createNavigator({
   getRoute: () => store.getState().route,
-  onNavigate: route => store.setState(state => ({ ...state, route }))
+  onNavigate: (route, { resetScroll }) => {
+    store.setState(state => ({ ...state, route }));
+    if (resetScroll) {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      document.getElementById('main-view').focus({ preventScroll: true });
+    }
+  }
 });
 
 const auth = initAuth({ store, api, loginOverlay: overlays['login-dialog'], navigate, notify });

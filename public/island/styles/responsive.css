@@ -3,6 +3,7 @@
   .mobile-header { position: sticky; top: 0; z-index: 30; display: flex; min-height: 60px; align-items: center; justify-content: space-between; padding: 8px 14px; background: rgba(247,243,223,.95); border-bottom: 1px solid var(--island-border-light); backdrop-filter: blur(14px); }
   #main-view { margin: 0; padding: 18px 14px calc(92px + env(safe-area-inset-bottom)); }
   .mobile-nav { position: fixed; inset: auto 0 0; z-index: 40; display: flex; min-height: calc(72px + env(safe-area-inset-bottom)); align-items: start; justify-content: space-around; padding: 8px 8px env(safe-area-inset-bottom); background: var(--island-surface); border-top: 1px solid var(--island-border-light); box-shadow: 0 -8px 24px rgba(61,52,40,.08); }
+  .mobile-nav .nav-list { display: flex; width: 100%; justify-content: space-around; }
   .mobile-nav .nav-button { width: auto; min-width: 62px; min-height: 56px; flex-direction: column; gap: 2px; padding: 4px 8px; font-size: 12px; }
   .mobile-nav .nav-button img { width: 27px; height: 27px; }
   .overlay { align-items: end; padding: 0; }

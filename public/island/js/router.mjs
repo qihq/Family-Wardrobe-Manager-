@@ -42,6 +42,10 @@ export function isAllowedSection(section, isAdmin) {
   return SECTIONS.has(section) && (isAdmin || !ADMIN_SECTIONS.has(section));
 }
 
+export function shouldResetScroll(previousRoute, nextRoute) {
+  return previousRoute.section !== nextRoute.section;
+}
+
 export function createNavigator({ getRoute, onNavigate }) {
   return function navigate(patch = {}, { replace = false } = {}) {
     const current = getRoute();
@@ -53,7 +57,7 @@ export function createNavigator({ getRoute, onNavigate }) {
     };
     const query = serializeRoute(next);
     history[replace ? 'replaceState' : 'pushState']({}, '', location.pathname + (query ? `?${query}` : ''));
-    onNavigate(next);
+    onNavigate(next, { resetScroll: shouldResetScroll(current, next) });
     return next;
   };
 }

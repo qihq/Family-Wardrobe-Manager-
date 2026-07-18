@@ -1,4 +1,5 @@
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { color-scheme: light; }
 body { margin: 0; min-width: 320px; background: var(--island-page); color: var(--island-text); font: 500 14px/1.5715 Nunito, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -9,6 +10,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .island-button:active { transform: translateY(4px); box-shadow: 0 1px 0 #bdaea0; }
 .island-button--primary { border-color: var(--island-primary); background: var(--island-primary); color: #fff; box-shadow: 0 5px 0 var(--island-primary-active); }
 .island-icon-button { display: inline-grid; width: 44px; padding: 8px; place-items: center; border-radius: 50%; background: var(--island-surface); }
+.island-icon-button img { width: 24px; height: 24px; object-fit: contain; }
 .island-pill { display: inline-flex; align-items: center; padding: 0 16px; border-radius: 999px; background: var(--island-page); }
 .island-field { width: 100%; min-height: 44px; padding: 10px 14px; border: 2px solid var(--island-border-light); border-radius: 12px; background: #fffdf7; }
 .island-panel { border: 1px solid var(--island-border-light); border-radius: var(--island-radius-lg); background: var(--island-surface); box-shadow: var(--island-shadow); }

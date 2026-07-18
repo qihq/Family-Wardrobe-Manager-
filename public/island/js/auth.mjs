@@ -1,5 +1,9 @@
 import { ApiError } from './api.mjs';
 
+export function shouldOpenLoginForPath(pathname, isAdmin) {
+  return !isAdmin && (pathname === '/admin' || pathname === '/admin/login');
+}
+
 export function initAuth({ store, api, loginOverlay, navigate, notify }) {
   const form = document.getElementById('login-form');
   const loginError = document.getElementById('login-error');
@@ -8,6 +12,7 @@ export function initAuth({ store, api, loginOverlay, navigate, notify }) {
     try {
       const result = await api.getAuth();
       store.setState(state => ({ ...state, auth: { status: 'ready', isAdmin: Boolean(result.isAdmin) } }));
+      if (shouldOpenLoginForPath(location.pathname, Boolean(result.isAdmin))) loginOverlay.open();
     } catch (error) {
       store.setState(state => ({ ...state, auth: { status: 'ready', isAdmin: false } }));
       notify(error.message, 'error');

@@ -24,10 +24,20 @@ test('explicit island preference maps classic URL without a loop', async () => {
 });
 
 test('route state round trips unicode multi filters and guards admin sections', async () => {
-  const { parseRoute, serializeRoute, isAllowedSection } = await import('../public/island/js/router.mjs');
+  const { parseRoute, serializeRoute, isAllowedSection, shouldResetScroll } = await import('../public/island/js/router.mjs');
   const route = parseRoute('?section=wardrobe&member=小明,小花&season=春&favorite=true&q=蓝色');
   assert.deepEqual(route.filters.member, ['小明', '小花']);
   assert.equal(parseRoute('?' + serializeRoute(route)).filters.q, '蓝色');
   assert.equal(isAllowedSection('add', false), false);
   assert.equal(isAllowedSection('add', true), true);
+  assert.equal(shouldResetScroll({ section: 'wardrobe' }, { section: 'add' }), true);
+  assert.equal(shouldResetScroll({ section: 'wardrobe' }, { section: 'wardrobe' }), false);
+});
+
+test('admin paths request management login for logged out visitors', async () => {
+  const { shouldOpenLoginForPath } = await import('../public/island/js/auth.mjs');
+  assert.equal(shouldOpenLoginForPath('/admin', false), true);
+  assert.equal(shouldOpenLoginForPath('/admin/login', false), true);
+  assert.equal(shouldOpenLoginForPath('/view', false), false);
+  assert.equal(shouldOpenLoginForPath('/admin', true), false);
 });

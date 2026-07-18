@@ -13,7 +13,12 @@ export function deriveStats(clothes, members) {
   return stats;
 }
 
-export function statsFilter(stat) { return { section: 'wardrobe', filters: stat.filter }; }
+export function statsFilter(stat) {
+  return {
+    section: 'wardrobe',
+    filters: { q: '', member: [], type: [], season: [], status: [], favorite: false, ...stat.filter }
+  };
+}
 
 export function initStats({ root, store, navigate }) {
   root.innerHTML = `<header class="section-heading"><div><p class="section-kicker">衣橱概览</p><h1>统计</h1><p class="section-summary">点击数字，返回衣橱查看对应衣物。</p></div></header><div id="stats-grid" class="stats-grid"></div>`;

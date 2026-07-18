@@ -17,6 +17,27 @@ test('island shell exposes semantic responsive anchors', () => {
   assert.doesNotMatch(html, /onclick=/);
 });
 
+test('icon buttons constrain asset dimensions to prevent viewport overflow', () => {
+  const css = fs.readFileSync(path.join(root, 'public/island/styles/base.css'), 'utf8');
+  assert.match(css, /\.island-icon-button\s+img\s*\{[^}]*width:\s*24px[^}]*height:\s*24px/s);
+});
+
+test('hidden state always wins over component display styles', () => {
+  const css = fs.readFileSync(path.join(root, 'public/island/styles/base.css'), 'utf8');
+  assert.match(css, /\[hidden\]\s*\{\s*display:\s*none\s*!important/);
+});
+
+test('tablet and mobile headers expose classic switch and admin logout', () => {
+  const html = fs.readFileSync(path.join(root, 'public/island/index.html'), 'utf8');
+  for (const header of ['tablet-header', 'mobile-header']) {
+    const start = html.indexOf(`class="${header}"`);
+    const end = html.indexOf('</header>', start);
+    const markup = html.slice(start, end);
+    assert.match(markup, /switch-classic/);
+    assert.match(markup, /account-logout/);
+  }
+});
+
 test('navigation inventory follows authorization', async () => {
   const { getNavItems } = await import('../public/island/js/constants.mjs');
   assert.deepEqual(getNavItems(false).map(item => item.section), ['wardrobe']);
@@ -60,6 +81,16 @@ test('item form validates required values and builds compatible form data', asyn
   assert.equal(data.get('thumb').name, 'thumb.jpg');
 });
 
+test('mobile item flow starts at photo then advances to classification', async () => {
+  const { nextMobileStep } = await import('../public/island/js/item-form.mjs');
+  assert.equal(nextMobileStep(0, {}), 1);
+});
+
+test('mobile navigation lays out destinations horizontally', () => {
+  const css = fs.readFileSync(path.join(root, 'public/island/styles/responsive.css'), 'utf8');
+  assert.match(css, /\.mobile-nav\s+\.nav-list\s*\{[^}]*display:\s*flex[^}]*width:\s*100%/s);
+});
+
 test('statistics derive stored categories and map back to wardrobe filters', async () => {
   const { deriveStats, statsFilter } = await import('../public/island/js/stats.mjs');
   const clothes = [
@@ -70,5 +101,8 @@ test('statistics derive stored categories and map back to wardrobe filters', asy
   assert.equal(stats.find(stat => stat.key === 'total').count, 2);
   assert.equal(stats.find(stat => stat.key === 'season:四季').count, 1);
   assert.equal(stats.find(stat => stat.key === 'season:春').count, 1);
-  assert.deepEqual(statsFilter(stats.find(stat => stat.key === 'member:小明')), { section: 'wardrobe', filters: { member: ['小明'] } });
+  assert.deepEqual(statsFilter(stats.find(stat => stat.key === 'member:小明')), {
+    section: 'wardrobe',
+    filters: { q: '', member: ['小明'], type: [], season: [], status: [], favorite: false }
+  });
 });
