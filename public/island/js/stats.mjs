@@ -20,22 +20,32 @@ export function statsFilter(stat) {
   };
 }
 
+export function renderStatsGrid(stats, error = '') {
+  if (error) return `<div class="collection-state" role="alert"><p>${escapeHtml(error)}</p><button class="island-button" type="button" data-stats-retry>重新加载</button></div>`;
+  return stats.map(stat => `<button class="stat-tile island-panel" type="button" data-stat="${escapeHtml(stat.key)}" aria-label="${escapeHtml(stat.label)}：${stat.count} 件"><strong>${stat.count}</strong><span>${escapeHtml(stat.label)}</span></button>`).join('');
+}
+
 export function initStats({ root, store, api, navigate, onSelect }) {
   root.innerHTML = `<header class="section-heading"><div><p class="section-kicker">衣橱概览</p><h1>统计</h1><p class="section-summary">点击数字，返回衣橱查看对应衣物。</p></div></header><div id="stats-grid" class="stats-grid"></div>`;
   const grid = root.querySelector('#stats-grid');
   let allClothes = [];
   let loading = false;
   let wasVisible = false;
+  let loadError = '';
   function render(state) {
-    grid.innerHTML = deriveStats(allClothes, state.members).map(stat => `<button class="stat-tile island-panel" type="button" data-stat="${escapeHtml(stat.key)}" aria-label="${escapeHtml(stat.label)}：${stat.count} 件"><strong>${stat.count}</strong><span>${escapeHtml(stat.label)}</span></button>`).join('');
+    grid.innerHTML = renderStatsGrid(deriveStats(allClothes, state.members), loadError);
   }
   async function loadAll(state) {
     if (loading || state.route.section !== 'stats') return;
     loading = true;
-    try { allClothes = await api.getClothes({}); render(store.getState()); }
+    loadError = '';
+    try { allClothes = await api.getClothes({}); }
+    catch (error) { loadError = error.message || '统计加载失败'; }
     finally { loading = false; }
+    render(store.getState());
   }
   grid.addEventListener('click', event => {
+    if (event.target.closest('[data-stats-retry]')) { loadAll(store.getState()); return; }
     const button = event.target.closest('[data-stat]'); if (!button) return;
     const stat = deriveStats(allClothes, store.getState().members).find(item => item.key === button.dataset.stat);
     if (stat) { navigate(statsFilter(stat)); onSelect(); }

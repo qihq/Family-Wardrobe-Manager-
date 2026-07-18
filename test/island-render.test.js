@@ -117,7 +117,7 @@ test('mobile navigation lays out destinations horizontally', () => {
 });
 
 test('statistics derive stored categories and map back to wardrobe filters', async () => {
-  const { deriveStats, statsFilter } = await import('../public/island/js/stats.mjs');
+  const { deriveStats, renderStatsGrid, statsFilter } = await import('../public/island/js/stats.mjs');
   const clothes = [
     { id: 'c1', member: '小明', clothingType: '上衣', status: '在用', seasons: ['四季'], favorite: true },
     { id: 'c2', member: '小花', clothingType: '鞋子', status: '闲置', seasons: ['春'], favorite: false }
@@ -130,6 +130,9 @@ test('statistics derive stored categories and map back to wardrobe filters', asy
     section: 'wardrobe',
     filters: { q: '', member: ['小明'], type: [], season: [], status: [], favorite: false }
   });
+  const error = renderStatsGrid([], '统计加载失败');
+  assert.match(error, /role="alert"/);
+  assert.match(error, /data-stats-retry/);
 });
 
 test('classic admin exposes a desktop switch to island UI', () => {
