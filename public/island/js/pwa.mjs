@@ -1,5 +1,8 @@
 let installPrompt = null;
 const installButtons = Array.from(document.querySelectorAll('[data-install-app]'));
+const isStandalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+document.documentElement.classList.toggle('is-standalone', isStandalone);
 
 function updateInstallButtons({ available = false, installed = false } = {}) {
   installButtons.forEach(button => {
@@ -9,7 +12,7 @@ function updateInstallButtons({ available = false, installed = false } = {}) {
   });
 }
 
-updateInstallButtons({ installed: matchMedia('(display-mode: standalone)').matches });
+updateInstallButtons({ installed: isStandalone });
 
 window.addEventListener('beforeinstallprompt', event => {
   event.preventDefault();

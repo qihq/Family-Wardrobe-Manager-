@@ -13,24 +13,28 @@
 
 - 👕 衣物录入：支持拍照上传，图片自动压缩生成缩略图
 - 👨‍👩‍👦 多人员管理：按家庭成员分类管理衣物
-- 🔍 多维筛选：按类型、季节、状态、收藏筛选
+- 🔍 统一搜索与筛选：在同一入口按关键词、家庭成员、类型、季节、状态和收藏组合查询
 - ↕️ 列表排序：桌面端点击列头排序，手机端胶囊排序
 - ⭐ 收藏标记：快速标记常用衣物，一键切换
 - 📊 统计概览：点击数字卡片展开对应衣物列表
-- 📱 响应式设计：桌面 / 平板 / 手机三档自适应
+- 📱 响应式设计：桌面侧栏、平板顶部栏、手机底部栏三档自适应
+- 📲 PWA 应用：支持安装到桌面或手机主屏，独立窗口和安全区适配
 - 👀 只读端：无需登录，供家里阿姨等人员查看
-- 🏝️ Island UI：默认启用的新界面，整合浏览、管理、人员和统计入口
+- 🏝️ Island UI：默认启用的新界面，以统一系统菜单整合账户、安装和经典界面入口
 - 🔁 经典 UI：可随时切换回原界面，浏览器会记住本机选择
 
 ## UI 入口
 
-- `/view`：默认 Island UI 衣橱；登录后在同一界面显示管理功能
-- `/admin`、`/admin/login`：Island UI 管理登录入口
+- `/view`：公开的 Island UI 衣橱浏览入口
+- `/login`：独立的 Island UI 管理登录页
+- `/admin`、`/admin/login`：受保护的 Island UI 管理入口；未登录时跳转到 `/login`
 - `/classic/view`：原只读界面
 - `/classic/admin`、`/classic/admin/login`：原管理界面
 
 新旧 UI 共用同一套 API、Session、JSON 数据和照片。UI 偏好仅保存在
 当前浏览器的 `wardrobe_ui_v1` 中，不会修改衣物数据或登录凭据。
+Island UI 还提供 `manifest.webmanifest` 和根作用域 Service Worker；账户、照片、
+API 与配置文件不会写入离线缓存。
 
 Animal Island 风格素材来自
 [`guokaigdg/animal-island-ui`](https://github.com/guokaigdg/animal-island-ui)，
@@ -83,6 +87,7 @@ wardrobe/
 │   └── members.json       # 人员数据
 ├── photos/                # 图片存储（volume 挂载）
 └── public/
+    ├── island/            # 默认三端 UI、独立登录页、PWA 与动森素材
     ├── shared/
     │   ├── style.css
     │   └── utils.js
@@ -90,7 +95,7 @@ wardrobe/
     │   ├── index.html
     │   ├── login.html
     │   └── admin.js
-    └── view/
+    └── view/              # 经典只读界面
         ├── index.html
         └── view.js
 ```
@@ -164,25 +169,30 @@ A family wardrobe management tool for recording and organizing clothing items by
 
 - 👕 Clothing entry with photo upload — images are automatically compressed and thumbnails generated
 - 👨‍👩‍👦 Multi-member management — organize clothing by family member
-- 🔍 Multi-dimensional filtering — by type, season, status, and favorites
+- 🔍 Unified search and filters — combine keywords, family members, type, season, status, and favorites from one entry point
 - ↕️ Sortable list — click column headers on desktop, pill buttons on mobile
 - ⭐ Favorites — one-click toggle to mark frequently used items
 - 📊 Statistics — click any stat card to expand the matching clothing list
-- 📱 Responsive design — desktop / tablet / mobile adaptive layout
+- 📱 Responsive design — desktop sidebar, tablet header, and mobile bottom navigation
+- 📲 PWA support — installable on desktop or mobile with standalone-window and safe-area handling
 - 👀 Read-only view — no login required, designed for household staff
-- 🏝️ Island UI — the new default interface unifies browsing and management
+- 🏝️ Island UI — the new default interface consolidates account, installation, and classic-UI actions in one system menu
 - 🔁 Classic UI — switch back at any time; the browser remembers the choice
 
 ## UI Routes
 
-- `/view`: Island wardrobe; authenticated management appears in the same shell
-- `/admin`, `/admin/login`: Island management login entry points
+- `/view`: public Island wardrobe browser
+- `/login`: standalone Island management login page
+- `/admin`, `/admin/login`: protected Island management routes; unauthenticated users are redirected to `/login`
 - `/classic/view`: original read-only interface
 - `/classic/admin`, `/classic/admin/login`: original management interface
 
 Both UIs share the same API, session, JSON records, and photos. The
 `wardrobe_ui_v1` preference is local to the current browser and never changes
 wardrobe data or credentials.
+The Island UI also ships a web app manifest and root-scoped Service Worker.
+Accounts, photos, APIs, and configuration files are explicitly excluded from
+offline caching.
 
 Animal Island style assets come from
 [`guokaigdg/animal-island-ui`](https://github.com/guokaigdg/animal-island-ui)
@@ -235,6 +245,7 @@ wardrobe/
 │   └── members.json       # Member data
 ├── photos/                # Photo storage (volume mount)
 └── public/
+    ├── island/            # Default responsive UI, standalone login, PWA, and Animal Island assets
     ├── shared/
     │   ├── style.css
     │   └── utils.js
@@ -242,7 +253,7 @@ wardrobe/
     │   ├── index.html
     │   ├── login.html
     │   └── admin.js
-    └── view/
+    └── view/              # Classic read-only interface
         ├── index.html
         └── view.js
 ```

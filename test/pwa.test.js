@@ -33,9 +33,17 @@ test('application and login pages register the root-scoped worker', () => {
   const registration = fs.readFileSync(path.join(root, 'public/island/js/pwa.mjs'), 'utf8');
   assert.match(registration, /register\('\/sw\.js'/);
   assert.match(registration, /beforeinstallprompt/);
+  assert.match(registration, /documentElement\.classList\.toggle\('is-standalone'/);
   for (const file of ['public/island/index.html', 'public/island/login.html']) {
     const html = fs.readFileSync(path.join(root, file), 'utf8');
     assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
     assert.match(html, /js\/pwa\.mjs/);
   }
+});
+
+test('standalone mobile navigation consumes the safe area without floating above it', () => {
+  const css = fs.readFileSync(path.join(root, 'public/island/styles/responsive.css'), 'utf8');
+  assert.match(css, /html\.is-standalone \.mobile-nav\s*\{[^}]*bottom:\s*0/s);
+  assert.match(css, /@media \(display-mode:\s*standalone\)[\s\S]*?\.mobile-nav\s*\{[^}]*bottom:\s*0/s);
+  assert.match(css, /html\.is-standalone \.mobile-nav\s*\{[^}]*padding-bottom:\s*max\(6px, env\(safe-area-inset-bottom\)\)/s);
 });

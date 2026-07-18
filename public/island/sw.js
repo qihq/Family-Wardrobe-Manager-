@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wardrobe-island-v2';
+const CACHE_NAME = 'wardrobe-island-v3';
 const APP_SHELL = [
   '/view',
   '/login',
@@ -6,8 +6,9 @@ const APP_SHELL = [
   '/public/island/styles/tokens.css',
   '/public/island/styles/base.css',
   '/public/island/styles/app.css',
-  '/public/island/styles/responsive.css',
+  '/public/island/styles/responsive.css?v=3',
   '/public/island/styles/login.css',
+  '/public/island/js/pwa.mjs?v=3',
   '/public/island/assets/icons/icon-shopping.svg',
   '/public/island/assets/icons/icon-design.svg',
   '/public/island/assets/icons/icon-diy.svg',
