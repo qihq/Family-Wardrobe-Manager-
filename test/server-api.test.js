@@ -11,7 +11,7 @@ test('relative runtime paths resolve from the application directory', () => {
 });
 
 test('config path supports the current NAS public bind mount', () => {
-  assert.equal(resolveConfigPath(path => path.endsWith('public\\config.json') || path.endsWith('public/config.json')), require('node:path').join(require('node:path').resolve(__dirname, '..'), 'public', 'config.json'));
+  assert.equal(resolveConfigPath(() => true), require('node:path').join(require('node:path').resolve(__dirname, '..'), 'public', 'config.json'));
 });
 
 test('visitor filters and admin completes clothing mutations', async t => {

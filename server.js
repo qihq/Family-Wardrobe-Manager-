@@ -13,9 +13,9 @@ function resolveRuntimePath(value, fallback) {
 }
 
 function resolveConfigPath(exists = fs.existsSync) {
-  const standard = path.join(__dirname, 'config.json');
-  if (exists(standard)) return standard;
-  return path.join(__dirname, 'public', 'config.json');
+  const mapped = path.join(__dirname, 'public', 'config.json');
+  if (exists(mapped)) return mapped;
+  return path.join(__dirname, 'config.json');
 }
 
 function createWardrobeApp(options = {}) {
