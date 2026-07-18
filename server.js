@@ -118,12 +118,16 @@ app.use('/photos', express.static(PHOTO_BASE));
 
 // ─── 页面路由 ─────────────────────────────────────────────────────
 app.get('/',            (req, res) => res.redirect('/view'));
-app.get('/view',        (req, res) => res.sendFile(path.join(__dirname, 'public/view/index.html')));
-app.get('/admin',       (req, res) => {
-  if (!req.session.isAdmin) return res.redirect('/admin/login');
+app.get(['/view', '/admin', '/admin/login'], (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/island/index.html')));
+app.get('/classic/view', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/view/index.html')));
+app.get('/classic/admin', (req, res) => {
+  if (!req.session.isAdmin) return res.redirect('/classic/admin/login');
   res.sendFile(path.join(__dirname, 'public/admin/index.html'));
 });
-app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'public/admin/login.html')));
+app.get('/classic/admin/login', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/admin/login.html')));
 
 // ─── Auth ─────────────────────────────────────────────────────────
 app.post('/api/login', (req, res) => {

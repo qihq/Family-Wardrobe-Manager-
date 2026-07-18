@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-ui="island">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>家庭衣橱</title>
+  <script type="module">
+    import { UI_PREFERENCE_KEY, resolveUiTarget } from '/public/island/js/preference.mjs';
+    const url = new URL(location.href);
+    const explicit = url.searchParams.get('ui');
+    if (explicit === 'island' || explicit === 'classic') {
+      localStorage.setItem(UI_PREFERENCE_KEY, explicit);
+    }
+    const target = resolveUiTarget({ url, storedPreference: localStorage.getItem(UI_PREFERENCE_KEY) });
+    if (target) location.replace(target);
+  </script>
+</head>
+<body>
+  <main id="app" aria-busy="true"></main>
+</body>
+</html>
