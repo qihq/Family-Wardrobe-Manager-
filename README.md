@@ -19,6 +19,23 @@
 - 📊 统计概览：点击数字卡片展开对应衣物列表
 - 📱 响应式设计：桌面 / 平板 / 手机三档自适应
 - 👀 只读端：无需登录，供家里阿姨等人员查看
+- 🏝️ Island UI：默认启用的新界面，整合浏览、管理、人员和统计入口
+- 🔁 经典 UI：可随时切换回原界面，浏览器会记住本机选择
+
+## UI 入口
+
+- `/view`：默认 Island UI 衣橱；登录后在同一界面显示管理功能
+- `/admin`、`/admin/login`：Island UI 管理登录入口
+- `/classic/view`：原只读界面
+- `/classic/admin`、`/classic/admin/login`：原管理界面
+
+新旧 UI 共用同一套 API、Session、JSON 数据和照片。UI 偏好仅保存在
+当前浏览器的 `wardrobe_ui_v1` 中，不会修改衣物数据或登录凭据。
+
+Animal Island 风格素材来自
+[`guokaigdg/animal-island-ui`](https://github.com/guokaigdg/animal-island-ui)，
+采用 CC BY-NC 4.0，仅用于本项目的个人非商业用途。完整清单见
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md)。
 
 ## 技术栈
 
@@ -133,7 +150,8 @@ wardrobe/
 
 ## 许可证
 
-MIT
+项目原创代码采用 MIT；第三方 UI 素材遵循各自许可证，详见
+`THIRD_PARTY_NOTICES.md`。
 
 ---
 
@@ -152,6 +170,24 @@ A family wardrobe management tool for recording and organizing clothing items by
 - 📊 Statistics — click any stat card to expand the matching clothing list
 - 📱 Responsive design — desktop / tablet / mobile adaptive layout
 - 👀 Read-only view — no login required, designed for household staff
+- 🏝️ Island UI — the new default interface unifies browsing and management
+- 🔁 Classic UI — switch back at any time; the browser remembers the choice
+
+## UI Routes
+
+- `/view`: Island wardrobe; authenticated management appears in the same shell
+- `/admin`, `/admin/login`: Island management login entry points
+- `/classic/view`: original read-only interface
+- `/classic/admin`, `/classic/admin/login`: original management interface
+
+Both UIs share the same API, session, JSON records, and photos. The
+`wardrobe_ui_v1` preference is local to the current browser and never changes
+wardrobe data or credentials.
+
+Animal Island style assets come from
+[`guokaigdg/animal-island-ui`](https://github.com/guokaigdg/animal-island-ui)
+under CC BY-NC 4.0 for this personal, non-commercial project. See
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) for the complete inventory.
 
 ## Tech Stack
 
@@ -266,4 +302,5 @@ Each record in `wardrobe.json`:
 
 ## License
 
-MIT
+Original project code is MIT licensed. Third-party UI assets retain their own
+licenses as documented in `THIRD_PARTY_NOTICES.md`.
